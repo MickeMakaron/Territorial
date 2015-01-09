@@ -24,7 +24,7 @@
 #define ANTGAME_CURSORNODE_HPP
 
 ////////////////////////////////////////////////
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include "SFML/Window/Event.hpp"
 #include "SFML/Graphics/Sprite.hpp"
 ////////////////////////////////////////////////
@@ -35,10 +35,15 @@
 
 class EntityNode;
 
+namespace sf
+{
+    class RenderWindow;
+}
+
 class CursorNode : public SceneNode
 {
     public:
-                        CursorNode(sf::RenderTarget& target);
+                        CursorNode(sf::RenderWindow& window, sf::RenderTarget& target);
 
         void setTexture(const sf::Texture& texture);
 
@@ -48,11 +53,13 @@ class CursorNode : public SceneNode
 		virtual void    drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
 		virtual sf::FloatRect getBoundingRect() const;
 
+
+
     private:
         void setVisible();
         void setInvisible();
 
-        void activate(const sf::Event::MouseButtonEvent& event);
+        void activate();
         void refreshSelection(CommandQueue& commands);
 
         void onRightMouseRelease(const sf::Event::MouseButtonEvent& event);
@@ -63,6 +70,7 @@ class CursorNode : public SceneNode
     private:
         sf::Sprite          mSprite;
         sf::IntRect         mTextureRect;
+        sf::RenderWindow&  mWindow;
         sf::RenderTarget&   mTarget;
         sf::Vector2f        mLastPos;
 
