@@ -44,18 +44,28 @@ class EntityNode : public SceneNode
         void            repair(int points);
         void            damage(int points);
         void            destroy();
-        virtual bool    isMarkedForRemoval() const;
-        virtual void    drawCurrent(sf::RenderTarget&, sf::RenderStates) const;
-        virtual void    updateCurrent(sf::Time dt, CommandQueue& commands);
-        virtual unsigned int getCategory() const;
-        virtual sf::FloatRect getBoundingRect() const;
+
+        virtual bool            isMarkedForRemoval() const;
+        virtual void            drawCurrent(sf::RenderTarget&, sf::RenderStates) const;
+        virtual void            updateCurrent(sf::Time dt, CommandQueue& commands);
+        virtual unsigned int    getCategory() const;
+        virtual sf::FloatRect   getBoundingRect() const;
 
         void setTexture(const sf::Texture& texture);
         void setSprite(sf::Sprite sprite);
 
+
+        void setDestination(sf::Vector2f destination);
+        void moveTo(sf::Vector2f target, sf::Time dt);
+
+    private:
+        void updateOrigin();
+
     private:
         int	            mHp;
         sf::Sprite      mSprite;
+        float           mSpeed;
+        sf::Vector2f    mDestination;
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP

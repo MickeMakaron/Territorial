@@ -35,24 +35,56 @@
 
 EntityNode::EntityNode(int hp, sf::Vector2f position)
 : mHp(hp)
+, mSpeed(100)
+, mDestination(position)
 {
+    setPosition(position);
+    updateOrigin();
+}
+
+void EntityNode::updateOrigin()
+{
+    sf::FloatRect bounds = mSprite.getGlobalBounds();
+    setOrigin(bounds.width / 2.f, bounds.height / 2.f);
 }
 
 void EntityNode::setTexture(const sf::Texture& texture)
 {
     mSprite.setTexture(texture);
+    updateOrigin();
 }
 
 void EntityNode::setSprite(sf::Sprite sprite)
 {
     mSprite = sprite;
+    updateOrigin();
 }
 
+void EntityNode::setDestination(sf::Vector2f destination)
+{
+    mDestination = destination;
+}
 
+void EntityNode::moveTo(sf::Vector2f target, sf::Time dt)
+{
+    sf::Vector2f dVec = target - getPosition();
+    float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
+    float step = mSpeed * dt.asSeconds();
+    if(dSqrd < step * step)
+        setPosition(target);
+    else
+    {
+        float d = sqrtf(dSqrd);
+        sf::Vector2f unitVec = dVec / d;
+        move(unitVec * step);
+    }
+}
 
 void EntityNode::updateCurrent(sf::Time dt, CommandQueue& commands)
 {
-    move(10 * dt.asSeconds(), 10 * dt.asSeconds());
+    if(mDestination != getPosition())
+        moveTo(mDestination, dt);
+
 }
 
 void EntityNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
