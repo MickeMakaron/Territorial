@@ -27,6 +27,7 @@
 // SFML - Simple and Fast Media Library
 #include "SFML/Window/Event.hpp"
 #include "SFML/Graphics/Sprite.hpp"
+#include "SFML/Graphics/RectangleShape.hpp"
 ////////////////////////////////////////////////
 
 #include "SceneNode.hpp"
@@ -61,6 +62,7 @@ class CursorNode : public SceneNode
 
         void activate();
         void refreshSelection(CommandQueue& commands);
+        void updateOutline(const EntityNode* node, sf::RectangleShape& outline);
 
         void onRightMouseRelease(const sf::Event::MouseButtonEvent& event);
 
@@ -75,7 +77,9 @@ class CursorNode : public SceneNode
         sf::Vector2f        mLastPos;
 
         EntityNode*         mSelection;
+        sf::RectangleShape  mSelectionOutline;
         EntityNode*         mActivation;
+        sf::RectangleShape  mActivationOutline;
 
         Command mSelectCommand;
 };

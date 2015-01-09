@@ -37,12 +37,28 @@ CursorNode::CursorNode(sf::RenderWindow& window, sf::RenderTarget& target)
 , mSelection(nullptr)
 , mActivation(nullptr)
 {
+    sf::RectangleShape shape;
+	shape.setFillColor(sf::Color::Transparent);
+	shape.setOutlineColor(sf::Color::Blue);
+
+    mSelectionOutline = mActivationOutline = shape;
+
+    mSelectionOutline.setOutlineColor(sf::Color::Blue);
+    mSelectionOutline.setOutlineThickness(1.f);
+
+    mActivationOutline.setOutlineColor(sf::Color::Blue);
+    mActivationOutline.setOutlineThickness(3.f);
+
 
     mSelectCommand.category = Category::Entity;
     mSelectCommand.action = derivedAction<EntityNode>([this](EntityNode& node, sf::Time)
     {
         if(intersects(getWorldPosition(), node.getBoundingRect()) && !node.isMarkedForRemoval())
+        {
             mSelection = &node;
+            updateOutline(mSelection, mSelectionOutline);
+        }
+
     });
 }
 
@@ -70,7 +86,7 @@ void CursorNode::handleEvent(const sf::Event& event)
 void CursorNode::onRightMouseRelease(const sf::Event::MouseButtonEvent& event)
 {
     if(mActivation)
-        mActivation->setPosition(pix2coords(event.x, event.y));
+        mActivation->setDestination(pix2coords(event.x, event.y));
 }
 
 sf::Vector2f CursorNode::pix2coords(const int& x, const int& y) const
@@ -133,6 +149,15 @@ void CursorNode::refreshSelection(CommandQueue& commands)
         mSelection = nullptr;
         commands.push(mSelectCommand);
     }
+    else
+        updateOutline(mSelection, mSelectionOutline);
+}
+
+void CursorNode::updateOutline(const EntityNode* node, sf::RectangleShape& outline)
+{
+    sf::FloatRect rect = node->getBoundingRect();
+    outline.setPosition(rect.left, rect.top);
+    outline.setSize(sf::Vector2f(rect.width, rect.height));
 }
 
 void CursorNode::updateCurrent(sf::Time dt, CommandQueue& commands)
@@ -140,8 +165,14 @@ void CursorNode::updateCurrent(sf::Time dt, CommandQueue& commands)
     refreshSelection(commands);
     setPosition(pix2coords(sf::Mouse::getPosition(mWindow)));
 
-    if(mActivation && mActivation->isMarkedForRemoval())
-        mActivation = nullptr;
+    if(mActivation)
+    {
+        if(mActivation->isMarkedForRemoval())
+            mActivation = nullptr;
+        else
+            updateOutline(mActivation, mActivationOutline);
+    }
+
 
     mLastPos = getWorldPosition();
 }
@@ -156,7 +187,8 @@ void CursorNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) 
     target.draw(mSprite, states);
 
     if(mActivation)
-        drawBoundingRect(target, states);
-    else if(mSelection)
-        mSelection->drawBoundingRect(target, states);
+        target.draw(mActivationOutline);
+
+    if(mSelection)
+        target.draw(mSelectionOutline);
 }
