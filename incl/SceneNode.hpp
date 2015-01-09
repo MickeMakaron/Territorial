@@ -27,7 +27,7 @@
 #include "Category.hpp"
 
 ////////////////////////////////////////////////
-// C++ Standard Library
+// STD - C++ Standard Library
 #include <deque>
 #include <list>
 #include <set>
@@ -36,7 +36,7 @@
 ////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include "SFML/System/NonCopyable.hpp"
 #include "SFML/System/Time.hpp"
 #include "SFML/Graphics/Transformable.hpp"

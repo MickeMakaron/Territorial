@@ -23,7 +23,7 @@
 #include <Utility.hpp>
 
 ////////////////////////////////////////////////
-// C++ Standard Library
+// STD - C++ Standard Library
 #include <random>
 #include <cmath>
 #include <ctime>
@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Shape.hpp>

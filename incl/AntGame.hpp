@@ -24,7 +24,7 @@
 #define ANTGAME_ANTGAME_HPP
 
 ////////////////////////////////////////////////
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Window/Event.hpp"
 ////////////////////////////////////////////////

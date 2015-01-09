@@ -24,7 +24,7 @@
 ****************************************************************
 ****************************************************************/
 
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Graphics/Sprite.hpp"
 ////////////////////////////////////////////////

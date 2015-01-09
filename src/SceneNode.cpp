@@ -26,7 +26,7 @@
 #include "Utility.hpp"
 
 ////////////////////////////////////////////////
-// C++ Standard Library
+// STD - C++ Standard Library
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -40,7 +40,7 @@
 ////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderTarget.hpp"
 ////////////////////////////////////////////////
