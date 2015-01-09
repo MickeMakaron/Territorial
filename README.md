@@ -18,7 +18,7 @@ There is a simple state of diplomacy between the ant colonies. Either they are e
 ##Development
 The game is currently very early in development and is far away from a working product. Before starting to implement the actual content listed under [future plans]( "future plans") below, the following must be developed:
 
-* Camera movement
+* ~~Camera movement~~
 * Unit movement
 * Unit AI
 * Combat
