@@ -43,9 +43,9 @@ World::World(sf::RenderWindow& window)
 
 void World::update(sf::Time dt)
 {
-    mCursorNode.update(dt, mCommandQueue);
     mCameraNode.update(dt, mCommandQueue);
     mEntitiesGraph.update(dt, mCommandQueue);
+    mCursorNode.update(dt, mCommandQueue);
 
     while (!mCommandQueue.isEmpty())
 		mEntitiesGraph.onCommand(mCommandQueue.pop(), dt);
@@ -76,11 +76,9 @@ void World::buildWorld()
 
 
 
-
     mTextures.load(1, "assets/textures/anthill_large.png");
-    std::unique_ptr<EntityNode> antHill(new EntityNode(100));
+    std::unique_ptr<EntityNode> antHill(new EntityNode(100, sf::Vector2f(250, 250)));
     antHill->setTexture(mTextures.get(1));
-    antHill->setPosition(250, 250);
     mEntitiesGraph.attachChild(std::move(antHill));
 
 
