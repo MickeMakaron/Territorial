@@ -21,7 +21,7 @@
 ****************************************************************/
 
 ////////////////////////////////////////////////
-// Super Fast Media Library (SFML)
+// SFML - Simple and Fast Media Library
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/RenderTarget.hpp"
 #include "SFML/Window/Event.hpp"
@@ -34,7 +34,8 @@
 World::World(sf::RenderWindow& window)
 : mWindow(window)
 , mTarget(window)
-, mCursorNode(mTarget)
+, mCursorNode(mWindow, mTarget)
+, mCameraNode(mTarget)
 {
     buildWorld();
 }
@@ -42,8 +43,9 @@ World::World(sf::RenderWindow& window)
 
 void World::update(sf::Time dt)
 {
-    mEntitiesGraph.update(dt, mCommandQueue);
     mCursorNode.update(dt, mCommandQueue);
+    mCameraNode.update(dt, mCommandQueue);
+    mEntitiesGraph.update(dt, mCommandQueue);
 
     while (!mCommandQueue.isEmpty())
 		mEntitiesGraph.onCommand(mCommandQueue.pop(), dt);

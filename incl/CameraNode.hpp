@@ -20,58 +20,29 @@
 ****************************************************************
 ****************************************************************/
 
-#ifndef ANTGAME_WORLD_HPP
-#define ANTGAME_WORLD_HPP
-
-////////////////////////////////////////////////
-// STD - C++ Standard Library
-#include <list>
-#include <memory>
-////////////////////////////////////////////////
+#ifndef ANTGAME_CAMERANODE_HPP
+#define ANTGAME_CAMERANODE_HPP
 
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
-#include "SFML/System/Time.hpp"
-#include "SFML/Graphics/Sprite.hpp"
-#include "SFML/Graphics/Texture.hpp"
+#include "SFML/Graphics/RenderTarget.hpp"
 ////////////////////////////////////////////////
 
-#include "EntityNode.hpp"
-#include "ResourceHolder.hpp"
-#include "CommandQueue.hpp"
-#include "CursorNode.hpp"
-#include "CameraNode.hpp"
+#include "SceneNode.hpp"
 
-namespace sf
-{
-    class RenderWindow;
-    class RenderTarget;
-}
 
-class World
+class CameraNode : public SceneNode
 {
     public:
-        World(sf::RenderWindow& window);
-        void draw();
-        void update(sf::Time dt);
-        void handleEvent(const sf::Event& event);
+        CameraNode(sf::RenderTarget& target);
 
+        virtual void updateCurrent(sf::Time dt, CommandQueue& commands);
 
     private:
-        void buildWorld();
-        void moveView(sf::Time dt);
-
-    private:
-        SceneNode mEntitiesGraph;
-        sf::Sprite mBackground;
-        sf::RenderWindow& mWindow;
         sf::RenderTarget& mTarget;
-        sf::View         mView;
-        CursorNode mCursorNode;
-        CameraNode mCameraNode;
-        CommandQueue mCommandQueue;
-        ResourceHolder<sf::Texture, int> mTextures;
+        sf::View mView;
 };
 
-#endif // ANTGAME_HPP
+
+#endif // ANTGAME_CAMERANODE_HPP
