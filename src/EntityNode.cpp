@@ -21,17 +21,15 @@
 ****************************************************************/
 
 #include "EntityNode.hpp"
-#include "CommandQueue.hpp"
+
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
 #include "SFML/Graphics/RenderTarget.hpp"
 ////////////////////////////////////////////////
 
-////////////////////////////////////////////////
-// STD - C++ Standard Library
-#include <cassert>
-////////////////////////////////////////////////
+#include "CommandQueue.hpp"
+#include "TIME_PER_FRAME.hpp"
 
 EntityNode::EntityNode(int hp, sf::Vector2f position)
 : mHp(hp)
@@ -65,11 +63,11 @@ void EntityNode::setDestination(sf::Vector2f destination)
     mDestination = destination;
 }
 
-void EntityNode::moveTo(sf::Vector2f target, sf::Time dt)
+void EntityNode::moveTo(sf::Vector2f target)
 {
     sf::Vector2f dVec = target - getPosition();
     float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
-    float step = mSpeed * dt.asSeconds();
+    float step = mSpeed * TIME_PER_FRAME::S;
     if(dSqrd < step * step)
         setPosition(target);
     else
@@ -80,10 +78,10 @@ void EntityNode::moveTo(sf::Vector2f target, sf::Time dt)
     }
 }
 
-void EntityNode::updateCurrent(sf::Time dt, CommandQueue& commands)
+void EntityNode::updateCurrent(CommandQueue& commands)
 {
     if(mDestination != getPosition())
-        moveTo(mDestination, dt);
+        moveTo(mDestination);
 
 }
 

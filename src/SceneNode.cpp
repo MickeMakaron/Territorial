@@ -71,14 +71,14 @@ SceneNode::Ptr SceneNode::detachChild(const SceneNode& node)
 	return result;
 }
 
-void SceneNode::update(sf::Time dt, CommandQueue& commands)
+void SceneNode::update(CommandQueue& commands)
 {
-    updateCurrent(dt, commands);
+    updateCurrent(commands);
     updateCurrent();
-	updateChildren(dt, commands);
+	updateChildren(commands);
 }
 
-void SceneNode::updateCurrent(sf::Time, CommandQueue&)
+void SceneNode::updateCurrent(CommandQueue&)
 {
 	// Do nothing by default
 }
@@ -105,14 +105,14 @@ void SceneNode::destroyChildren()
         child->destroy();
 }
 
-void SceneNode::updateChildren(sf::Time dt, CommandQueue& commands)
+void SceneNode::updateChildren(CommandQueue& commands)
 {
 	for(Ptr& child : mChildren)
     {
         if(child->isMarkedForRemoval())
             child->destroy();
 
-        child->update(dt, commands);
+        child->update(commands);
     }
 
     // Remove children marked for removal.
@@ -179,15 +179,15 @@ bool SceneNode::isMarkedForRemoval() const
     return false;
 }
 
-void SceneNode::onCommand(const Command& command, sf::Time dt)
+void SceneNode::onCommand(const Command& command)
 {
 	// Command current node, if category matches
 	if (command.category & getCategory())
-		command.action(*this, dt);
+		command.action(*this);
 
 	// Command children
 	for(Ptr& child : mChildren)
-		child->onCommand(command, dt);
+		child->onCommand(command);
 }
 
 unsigned int SceneNode::getCategory() const

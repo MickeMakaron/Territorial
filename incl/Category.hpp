@@ -31,6 +31,7 @@ namespace Category
 	{
 		None				= 0,
 		Entity		        = 1 << 0,
+		Highlight           = 1 << 1,
 
 		//Creature = PlayerCreature | AlliedCreature | EnemyCreature,
 		//Projectile = AlliedProjectile | EnemyProjectile,

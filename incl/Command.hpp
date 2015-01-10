@@ -36,7 +36,7 @@ class SceneNode;
 struct Command
 {
     Command();
-    typedef std::function<void(SceneNode&, sf::Time)>   Action;
+    typedef std::function<void(SceneNode&)>   Action;
     Action						                        action;
     Category::Type                                      category;
 };
@@ -45,13 +45,13 @@ struct Command
 template <typename GameObject, typename Function>
 Command::Action derivedAction(Function fn)
 {
-    return [=] (SceneNode& node, sf::Time dt)
+    return [=] (SceneNode& node)
     {
         // Check if cast is safe
         assert(dynamic_cast<GameObject*>(&node) != nullptr);
 
         // Downcast node and invoke function on it
-        fn(static_cast<GameObject&>(node), dt);
+        fn(static_cast<GameObject&>(node));
     };
 }
 

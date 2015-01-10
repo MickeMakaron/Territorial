@@ -41,7 +41,7 @@
 #include "ResourceHolder.hpp"
 #include "CommandQueue.hpp"
 #include "CursorNode.hpp"
-#include "CameraNode.hpp"
+#include "Camera.hpp"
 
 namespace sf
 {
@@ -54,13 +54,13 @@ class World
     public:
         World(sf::RenderWindow& window);
         void draw();
-        void update(sf::Time dt);
+        void update();
         void handleEvent(const sf::Event& event);
 
 
     private:
         void buildWorld();
-        void moveView(sf::Time dt);
+        void moveView();
 
     private:
         SceneNode mEntitiesGraph;
@@ -69,7 +69,7 @@ class World
         sf::RenderTarget& mTarget;
         sf::View         mView;
         CursorNode mCursorNode;
-        CameraNode mCameraNode;
+        Camera mCamera;
         CommandQueue mCommandQueue;
         ResourceHolder<sf::Texture, int> mTextures;
 };

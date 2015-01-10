@@ -67,12 +67,12 @@ class SceneNode : public sf::Transformable, public sf::Drawable, private sf::Non
 
         void                    eraseChildren();
 
-		void            update(sf::Time dt, CommandQueue& commands);
+		void            update(CommandQueue& commands);
 
 		sf::Vector2f			getWorldPosition() const;
 		sf::Transform			getWorldTransform() const;
 
-		void					onCommand(const Command& command, sf::Time dt);
+		void					onCommand(const Command& command);
 		virtual unsigned int	getCategory() const;
 
 		virtual sf::FloatRect	getBoundingRect() const;
@@ -89,9 +89,9 @@ class SceneNode : public sf::Transformable, public sf::Drawable, private sf::Non
 	    void                    destroyChildren();
 	    void                    destroy();
 
-		virtual void			updateCurrent(sf::Time dt, CommandQueue& commands);
+		virtual void			updateCurrent(CommandQueue& commands);
 		virtual void            updateCurrent();
-		void					updateChildren(sf::Time dt, CommandQueue& commands);
+		void					updateChildren(CommandQueue& commands);
 
 		virtual void			draw(sf::RenderTarget& target, sf::RenderStates states) const;
 		virtual void			drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
@@ -103,5 +103,6 @@ class SceneNode : public sf::Transformable, public sf::Drawable, private sf::Non
 		SceneNode*				mParent;
 		Category::Type          mDefaultCategory;
 };
+
 
 #endif // ANTGAME_SCENENODE_HPP

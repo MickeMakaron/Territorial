@@ -50,7 +50,7 @@ class CursorNode : public SceneNode
 
         bool            hasMoved() const;
         void            handleEvent(const sf::Event& event);
-        virtual void    updateCurrent(sf::Time, CommandQueue&);
+        virtual void    updateCurrent(CommandQueue&);
 		virtual void    drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
 		virtual sf::FloatRect getBoundingRect() const;
 
@@ -64,24 +64,49 @@ class CursorNode : public SceneNode
         void refreshSelection(CommandQueue& commands);
         void updateOutline(const EntityNode* node, sf::RectangleShape& outline);
 
+        void updateSelectionBox(sf::Vector2f mousePos);
+
         void onRightMouseRelease(const sf::Event::MouseButtonEvent& event);
 
         sf::Vector2f pix2coords(const int& x, const int& y) const;
         sf::Vector2f pix2coords(const sf::Vector2i& pixel) const;
 
+        void pushSelection(EntityNode* node);
+        void pushActivation(EntityNode* node);
+
     private:
         sf::Sprite          mSprite;
         sf::IntRect         mTextureRect;
-        sf::RenderWindow&  mWindow;
+        sf::RenderWindow&   mWindow;
         sf::RenderTarget&   mTarget;
         sf::Vector2f        mLastPos;
 
-        EntityNode*         mSelection;
-        sf::RectangleShape  mSelectionOutline;
-        EntityNode*         mActivation;
-        sf::RectangleShape  mActivationOutline;
+        struct Highlight
+        {
+            Highlight(EntityNode* node, sf::RectangleShape outline)
+            : node(node)
+            , outline(outline)
+            {
+
+            }
+
+            EntityNode* node;
+            sf::RectangleShape outline;
+        };
+
+        std::vector<Highlight>              mSelections;
+        std::vector<Highlight>              mActivations;
+
+        sf::Vector2f        mMouseDownPos; ///< Position of last time user pressed mouse button.
+
+
+        sf::RectangleShape  mSelectionBox;
+        bool                mSelectionBoxNeedsUpdate;
+        sf::Vector2f        mSelectionBoxStartPos;
+        bool                mHasSelectionBox;
 
         Command mSelectCommand;
+        Command mSelectBoxCommand;
 };
 
 

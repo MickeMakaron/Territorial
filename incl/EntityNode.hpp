@@ -47,7 +47,7 @@ class EntityNode : public SceneNode
 
         virtual bool            isMarkedForRemoval() const;
         virtual void            drawCurrent(sf::RenderTarget&, sf::RenderStates) const;
-        virtual void            updateCurrent(sf::Time dt, CommandQueue& commands);
+        virtual void            updateCurrent(CommandQueue& commands);
         virtual unsigned int    getCategory() const;
         virtual sf::FloatRect   getBoundingRect() const;
 
@@ -56,7 +56,7 @@ class EntityNode : public SceneNode
 
 
         void setDestination(sf::Vector2f destination);
-        void moveTo(sf::Vector2f target, sf::Time dt);
+        void moveTo(sf::Vector2f target);
 
     private:
         void updateOrigin();

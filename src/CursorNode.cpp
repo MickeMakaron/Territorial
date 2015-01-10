@@ -34,43 +34,111 @@
 CursorNode::CursorNode(sf::RenderWindow& window, sf::RenderTarget& target)
 : mWindow(window)
 , mTarget(target)
-, mSelection(nullptr)
-, mActivation(nullptr)
+, mHasSelectionBox(false)
+, mSelectionBoxNeedsUpdate(false)
+{
+	mSelectionBox.setFillColor(sf::Color::Transparent);
+	mSelectionBox.setOutlineColor(sf::Color::Blue);
+    mSelectionBox.setOutlineThickness(1.f);
+
+    mSelectCommand.category = Category::Entity;
+    mSelectCommand.action = derivedAction<EntityNode>([this](EntityNode& node)
+    {
+        if(!node.isMarkedForRemoval() && intersects(getWorldPosition(), node.getBoundingRect()))
+            pushSelection(&node);
+    });
+
+    mSelectBoxCommand.category = Category::Entity;
+    mSelectBoxCommand.action = derivedAction<EntityNode>([this](EntityNode& node)
+    {
+        if(!node.isMarkedForRemoval()
+           && (intersects(node.getBoundingRect(), sf::FloatRect(mSelectionBox.getPosition(), mSelectionBox.getSize()))
+           || intersects(sf::FloatRect(mSelectionBox.getPosition(), mSelectionBox.getSize()), node.getBoundingRect())))
+            pushSelection(&node);
+    });
+}
+
+void CursorNode::pushSelection(EntityNode* node)
 {
     sf::RectangleShape shape;
 	shape.setFillColor(sf::Color::Transparent);
 	shape.setOutlineColor(sf::Color::Blue);
+    shape.setOutlineThickness(1.f);
 
-    mSelectionOutline = mActivationOutline = shape;
+	mSelections.push_back(Highlight(node, shape));
+}
 
-    mSelectionOutline.setOutlineColor(sf::Color::Blue);
-    mSelectionOutline.setOutlineThickness(1.f);
+void CursorNode::pushActivation(EntityNode* node)
+{
+    sf::RectangleShape shape;
+	shape.setFillColor(sf::Color::Transparent);
+	shape.setOutlineColor(sf::Color::Blue);
+    shape.setOutlineThickness(3.f);
 
-    mActivationOutline.setOutlineColor(sf::Color::Blue);
-    mActivationOutline.setOutlineThickness(3.f);
+	mActivations.push_back(Highlight(node, shape));
+}
 
 
-    mSelectCommand.category = Category::Entity;
-    mSelectCommand.action = derivedAction<EntityNode>([this](EntityNode& node, sf::Time)
+void CursorNode::updateSelectionBox(sf::Vector2f mousePos)
+{
+    if(mHasSelectionBox)
     {
-        if(intersects(getWorldPosition(), node.getBoundingRect()) && !node.isMarkedForRemoval())
-        {
-            mSelection = &node;
-            updateOutline(mSelection, mSelectionOutline);
-        }
+        sf::Vector2f dVec = mousePos - mSelectionBoxStartPos;
+        mSelectionBox.setPosition(mSelectionBoxStartPos);
+        mSelectionBox.setSize(dVec);
 
-    });
+        if(dVec.x < 0 || dVec.y < 0)
+        {
+            sf::Vector2f size = mSelectionBox.getSize();
+            sf::Vector2f pos = mSelectionBox.getPosition();
+
+            if(dVec.x < 0)
+            {
+                pos.x = mousePos.x;
+                size.x = -dVec.x;
+            }
+
+            if(dVec.y < 0)
+            {
+                pos.y = mousePos.y;
+                size.y = -dVec.y;
+            }
+
+            mSelectionBox.setPosition(pos);
+            mSelectionBox.setSize(size);
+        }
+    }
+    else
+    {
+        sf::Vector2f dVec = mousePos - mMouseDownPos;
+        float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
+
+        if(dSqrd > 100)
+        {
+            mSelectionBoxStartPos = mousePos;
+            mSelectionBox.setPosition(mousePos);
+            mSelectionBox.setSize(sf::Vector2f(0, 0));
+            mHasSelectionBox = true;
+        }
+    }
 }
 
 void CursorNode::handleEvent(const sf::Event& event)
 {
     switch(event.type)
     {
+        case sf::Event::MouseMoved:
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
+                mSelectionBoxNeedsUpdate = true;
+            break;
         case sf::Event::MouseLeft:
             setInvisible();
             break;
         case sf::Event::MouseEntered:
             setVisible();
+            break;
+        case sf::Event::MouseButtonPressed:
+            mMouseDownPos = pix2coords(event.mouseButton.x, event.mouseButton.y);
             break;
         case sf::Event::MouseButtonReleased:
             if(event.mouseButton.button == sf::Mouse::Button::Left)
@@ -85,8 +153,8 @@ void CursorNode::handleEvent(const sf::Event& event)
 
 void CursorNode::onRightMouseRelease(const sf::Event::MouseButtonEvent& event)
 {
-    if(mActivation)
-        mActivation->setDestination(pix2coords(event.x, event.y));
+    for(const Highlight& highlight: mActivations)
+        highlight.node->setDestination(pix2coords(event.x, event.y));
 }
 
 sf::Vector2f CursorNode::pix2coords(const int& x, const int& y) const
@@ -101,18 +169,32 @@ sf::Vector2f CursorNode::pix2coords(const sf::Vector2i& pixel) const
 
 void CursorNode::activate()
 {
-    if(mSelection)
+    if(mHasSelectionBox)
     {
-        if(intersects(getWorldPosition(), mSelection->getBoundingRect()))
-            mActivation = mSelection;
+        mActivations.clear();
+
+        for(const Highlight& selection : mSelections)
+            pushActivation(selection.node);
+
+        mHasSelectionBox = false;
+    }
+    else if(mSelections.size() > 0)
+    {
+        EntityNode* pSelection = mSelections[0].node;
+        sf::FloatRect selectionRect = pSelection->getBoundingRect();
+        if(intersects(mMouseDownPos, selectionRect) && intersects(mMouseDownPos, selectionRect))
+        {
+            mActivations.clear();
+            pushActivation(pSelection);
+        }
         else
         {
-            mSelection = nullptr;
-            mActivation = nullptr;
+            mActivations.clear();
+            mSelections.clear();
         }
     }
     else
-        mActivation = nullptr;
+        mActivations.clear();
 }
 
 sf::FloatRect CursorNode::getBoundingRect() const
@@ -140,17 +222,31 @@ void CursorNode::setInvisible()
 
 void CursorNode::refreshSelection(CommandQueue& commands)
 {
-    if(!mSelection)
+    if(mHasSelectionBox)
+        commands.push(mSelectBoxCommand);
+    else
         commands.push(mSelectCommand);
-    else if(mSelection->isMarkedForRemoval())
-        mSelection = nullptr;
-    else if(!intersects(getWorldPosition(), mSelection->getBoundingRect()))
+
+    auto wreckfieldBegin = std::remove_if(mSelections.begin(), mSelections.end(), [](const Highlight& highlight){return highlight.node->isMarkedForRemoval();});
+    mSelections.erase(wreckfieldBegin, mSelections.end());
+
+
+    if(mHasSelectionBox)
     {
-        mSelection = nullptr;
-        commands.push(mSelectCommand);
+        sf::FloatRect boxRect(mSelectionBox.getPosition(), mSelectionBox.getSize());
+        wreckfieldBegin = std::remove_if(mSelections.begin(), mSelections.end(), [boxRect](const Highlight& highlight){return !intersects(highlight.node->getBoundingRect(), boxRect);});
+        mSelections.erase(wreckfieldBegin, mSelections.end());
     }
     else
-        updateOutline(mSelection, mSelectionOutline);
+    {
+        sf::Vector2f worldPos = getWorldPosition();
+        wreckfieldBegin = std::remove_if(mSelections.begin(), mSelections.end(), [worldPos](const Highlight& highlight){return !intersects(worldPos, highlight.node->getBoundingRect());});
+        mSelections.erase(wreckfieldBegin, mSelections.end());
+    }
+
+
+    for(Highlight& highlight : mSelections)
+        updateOutline(highlight.node, highlight.outline);
 }
 
 void CursorNode::updateOutline(const EntityNode* node, sf::RectangleShape& outline)
@@ -160,19 +256,24 @@ void CursorNode::updateOutline(const EntityNode* node, sf::RectangleShape& outli
     outline.setSize(sf::Vector2f(rect.width, rect.height));
 }
 
-void CursorNode::updateCurrent(sf::Time dt, CommandQueue& commands)
+void CursorNode::updateCurrent(CommandQueue& commands)
 {
+    if(mSelectionBoxNeedsUpdate)
+    {
+        updateSelectionBox(pix2coords(sf::Mouse::getPosition(mWindow)));
+        mSelectionBoxNeedsUpdate = false;
+    }
+
+
     refreshSelection(commands);
     setPosition(pix2coords(sf::Mouse::getPosition(mWindow)));
 
-    if(mActivation)
-    {
-        if(mActivation->isMarkedForRemoval())
-            mActivation = nullptr;
-        else
-            updateOutline(mActivation, mActivationOutline);
-    }
+    auto wreckfieldBegin = std::remove_if(mActivations.begin(), mActivations.end(), [](const Highlight& highlight){return highlight.node->isMarkedForRemoval();});
+    mActivations.erase(wreckfieldBegin, mActivations.end());
 
+
+    for(Highlight& highlight : mActivations)
+        updateOutline(highlight.node, highlight.outline);
 
     mLastPos = getWorldPosition();
 }
@@ -186,9 +287,14 @@ void CursorNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) 
 {
     target.draw(mSprite, states);
 
-    if(mActivation)
-        target.draw(mActivationOutline);
 
-    if(mSelection)
-        target.draw(mSelectionOutline);
+
+    for(const Highlight& highlight : mActivations)
+        target.draw(highlight.outline);
+
+    for(const Highlight& highlight : mSelections)
+        target.draw(highlight.outline);
+
+    if(mHasSelectionBox)
+        target.draw(mSelectionBox);
 }

@@ -52,15 +52,13 @@ class AntGame
         AntGame(unsigned int sizeX, unsigned int sizeY);
 
         void processInput();
-        void update(sf::Time dt);
+        void update();
         void render();
         void run();
-
 
     private:
         sf::RenderWindow mWindow; ///< SFML window class.
         StateMachine mStateMachine; ///< State machine for menus and other states.
-        const sf::Time TIME_PER_FRAME = sf::seconds(1.f/60.f); ///< Inverse FPS
         World mWorld; ///< World state
 };
 

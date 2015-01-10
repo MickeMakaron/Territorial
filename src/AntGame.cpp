@@ -23,6 +23,7 @@
 #include "AntGame.hpp"
 
 #include "World.hpp"
+#include "TIME_PER_FRAME.hpp"
 
 
 AntGame::AntGame(unsigned int sizeX, unsigned int sizeY)
@@ -30,6 +31,7 @@ AntGame::AntGame(unsigned int sizeX, unsigned int sizeY)
 , mWorld(mWindow)
 {
     mWindow.setMouseCursorVisible(false);
+    TIME_PER_FRAME::setAsSeconds(1/60.f);
 }
 
 void AntGame::processInput()
@@ -45,9 +47,9 @@ void AntGame::processInput()
     }
 }
 
-void AntGame::update(sf::Time dt)
+void AntGame::update()
 {
-    mWorld.update(TIME_PER_FRAME);
+    mWorld.update();
 }
 
 void AntGame::render()
@@ -61,17 +63,18 @@ void AntGame::run()
 {
     sf::Clock clock;
     sf::Time timeSinceLastUpdate = sf::Time::Zero;
+    sf::Time timePerFrame = sf::Time(sf::seconds(TIME_PER_FRAME::S));
     while(mWindow.isOpen())
     {
         sf::Time dt = clock.restart();
         timeSinceLastUpdate += dt;
         unsigned int ticks = 0;
-        while (timeSinceLastUpdate > TIME_PER_FRAME)
+        while (timeSinceLastUpdate > timePerFrame)
         {
-            timeSinceLastUpdate -= TIME_PER_FRAME;
+            timeSinceLastUpdate -= timePerFrame;
             processInput();
 
-            update(TIME_PER_FRAME);
+            update();
 
 
             if(mStateMachine.isEmpty())

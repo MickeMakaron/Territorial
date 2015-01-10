@@ -28,27 +28,27 @@
 ////////////////////////////////////////////////
 
 #include "World.hpp"
-
+#include "TIME_PER_FRAME.hpp"
 
 
 World::World(sf::RenderWindow& window)
 : mWindow(window)
 , mTarget(window)
 , mCursorNode(mWindow, mTarget)
-, mCameraNode(mTarget)
+, mCamera(mWindow, mTarget)
 {
     buildWorld();
 }
 
 
-void World::update(sf::Time dt)
+void World::update()
 {
-    mCameraNode.update(dt, mCommandQueue);
-    mEntitiesGraph.update(dt, mCommandQueue);
-    mCursorNode.update(dt, mCommandQueue);
+    mCamera.update();
+    mEntitiesGraph.update(mCommandQueue);
+    mCursorNode.update(mCommandQueue);
 
     while (!mCommandQueue.isEmpty())
-		mEntitiesGraph.onCommand(mCommandQueue.pop(), dt);
+		mEntitiesGraph.onCommand(mCommandQueue.pop());
 }
 
 void World::handleEvent(const sf::Event& event)
@@ -74,12 +74,19 @@ void World::buildWorld()
     mBackground.setTexture(mTextures.get(0));
     mBackground.setTextureRect(sf::IntRect(0, 0, 500, 500));
 
-
-
     mTextures.load(1, "assets/textures/anthill_large.png");
-    std::unique_ptr<EntityNode> antHill(new EntityNode(100, sf::Vector2f(250, 250)));
-    antHill->setTexture(mTextures.get(1));
-    mEntitiesGraph.attachChild(std::move(antHill));
+    sf::Vector2f pos(200, 200);
+
+    for(int i = 0; i < 5; i++)
+    {
+        std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos));
+        antHill->setTexture(mTextures.get(1));
+        mEntitiesGraph.attachChild(std::move(antHill));
+
+        pos.x += 20;
+    }
+
+
 
 
     mTextures.load(2, "assets/textures/cursor.png");
