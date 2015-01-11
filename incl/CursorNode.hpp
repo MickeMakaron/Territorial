@@ -28,18 +28,19 @@
 #include "SFML/Window/Event.hpp"
 #include "SFML/Graphics/Sprite.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
-////////////////////////////////////////////////
-
-#include "SceneNode.hpp"
-#include "CommandQueue.hpp"
-
-
-class EntityNode;
-
 namespace sf
 {
     class RenderWindow;
 }
+////////////////////////////////////////////////
+
+
+#include "SceneNode.hpp"
+#include "CommandQueue.hpp"
+#include "EntitySelector.hpp"
+class EntityNode;
+
+
 
 class CursorNode : public SceneNode
 {
@@ -60,19 +61,8 @@ class CursorNode : public SceneNode
         void setVisible();
         void setInvisible();
 
-        void activate();
-        void refreshSelection(CommandQueue& commands);
-        void updateOutline(const EntityNode* node, sf::RectangleShape& outline);
-
-        void updateSelectionBox(sf::Vector2f mousePos);
-
-        void onRightMouseRelease(const sf::Event::MouseButtonEvent& event);
-
         sf::Vector2f pix2coords(const int& x, const int& y) const;
         sf::Vector2f pix2coords(const sf::Vector2i& pixel) const;
-
-        void pushSelection(EntityNode* node);
-        void pushActivation(EntityNode* node);
 
     private:
         sf::Sprite          mSprite;
@@ -80,33 +70,7 @@ class CursorNode : public SceneNode
         sf::RenderWindow&   mWindow;
         sf::RenderTarget&   mTarget;
         sf::Vector2f        mLastPos;
-
-        struct Highlight
-        {
-            Highlight(EntityNode* node, sf::RectangleShape outline)
-            : node(node)
-            , outline(outline)
-            {
-
-            }
-
-            EntityNode* node;
-            sf::RectangleShape outline;
-        };
-
-        std::vector<Highlight>              mSelections;
-        std::vector<Highlight>              mActivations;
-
-        sf::Vector2f        mMouseDownPos; ///< Position of last time user pressed mouse button.
-
-
-        sf::RectangleShape  mSelectionBox;
-        bool                mSelectionBoxNeedsUpdate;
-        sf::Vector2f        mSelectionBoxStartPos;
-        bool                mHasSelectionBox;
-
-        Command mSelectCommand;
-        Command mSelectBoxCommand;
+        EntitySelector      mEntitySelector;
 };
 
 
