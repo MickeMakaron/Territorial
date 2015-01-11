@@ -42,6 +42,7 @@
 #include "CommandQueue.hpp"
 #include "CursorNode.hpp"
 #include "Camera.hpp"
+#include "Team.hpp"
 
 namespace sf
 {
@@ -65,13 +66,16 @@ class World
     private:
         SceneNode mEntitiesGraph;
         sf::Sprite mBackground;
+
+        std::vector<Team>   mTeams;
+
+
         sf::RenderWindow& mWindow;
         sf::RenderTarget& mTarget;
-        sf::View         mView;
         CursorNode mCursorNode;
         Camera mCamera;
         CommandQueue mCommandQueue;
         ResourceHolder<sf::Texture, int> mTextures;
 };
 
-#endif // ANTGAME_HPP
+#endif // ANTGAME_WORLD_HPP

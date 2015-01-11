@@ -28,6 +28,7 @@
 ////////////////////////////////////////////////
 
 #include "World.hpp"
+#include "Team.hpp"
 #include "TIME_PER_FRAME.hpp"
 
 
@@ -77,14 +78,26 @@ void World::buildWorld()
     mTextures.load(1, "assets/textures/anthill_large.png");
     sf::Vector2f pos(200, 200);
 
+    Team team1(1 << 0);
+    Team team2(1 << 1);
+
+    mTeams.push_back(team1);
+    mTeams.push_back(team2);
+
+
     for(int i = 0; i < 5; i++)
     {
-        std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos));
+        std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::ComputerEntity));
         antHill->setTexture(mTextures.get(1));
         mEntitiesGraph.attachChild(std::move(antHill));
 
         pos.x += 20;
     }
+
+    pos.y += 50;
+    std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0]));
+    antHill->setTexture(mTextures.get(1));
+    mEntitiesGraph.attachChild(std::move(antHill));
 
 
 
