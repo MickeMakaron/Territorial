@@ -21,7 +21,10 @@
 ****************************************************************/
 
 #include "EntityNode.hpp"
+#include "Team.hpp"
 
+
+#include <cassert>
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
@@ -31,10 +34,16 @@
 #include "CommandQueue.hpp"
 #include "TIME_PER_FRAME.hpp"
 
-EntityNode::EntityNode(int hp, sf::Vector2f position)
-: mHp(hp)
+EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category)
+: SceneNode(category)
+, mHp(hp)
 , mSpeed(100)
 , mDestination(position)
+, mTarget(nullptr)
+, mHarvestCategory(0)
+, mAttackCategory(0)
+, mAssistCategory(Category::Entity)
+, mTeam(team)
 {
     setPosition(position);
     updateOrigin();
@@ -58,9 +67,47 @@ void EntityNode::setSprite(sf::Sprite sprite)
     updateOrigin();
 }
 
-void EntityNode::setDestination(sf::Vector2f destination)
+void EntityNode::interact(sf::Vector2f target)
 {
-    mDestination = destination;
+    mDestination = target;
+    mTarget = nullptr;
+}
+
+void EntityNode::interact(EntityNode* target)
+{
+    assert(target && !target->isMarkedForRemoval());
+
+    if(target->getCategory() & mAttackCategory)
+        attack(target);
+    else if(target->getCategory() & mHarvestCategory)
+        harvest(target);
+    else if(target->getCategory() & mAssistCategory)
+        assist(target);
+    else
+        interact(target->getPosition());
+}
+
+void EntityNode::attack(EntityNode* target)
+{
+    mTarget = target;
+}
+
+void EntityNode::harvest(EntityNode* target)
+{
+    mTarget = target;
+}
+
+void EntityNode::assist(EntityNode* target)
+{
+    if(mTeam.isAllied(target->getTeam()))
+        mTarget = target;
+   // else
+       // mDestination = target->getPosition();
+}
+
+const unsigned int& EntityNode::getTeam() const
+{
+    return mTeam.getId();
 }
 
 void EntityNode::moveTo(sf::Vector2f target)
@@ -80,6 +127,12 @@ void EntityNode::moveTo(sf::Vector2f target)
 
 void EntityNode::updateCurrent(CommandQueue& commands)
 {
+    if(mTarget)
+    {
+        assert(!mTarget->isMarkedForRemoval());
+        mDestination = mTarget->getPosition();
+    }
+
     if(mDestination != getPosition())
         moveTo(mDestination);
 
@@ -88,12 +141,6 @@ void EntityNode::updateCurrent(CommandQueue& commands)
 void EntityNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
 {
     target.draw(mSprite, states);
-}
-
-
-unsigned int EntityNode::getCategory() const
-{
-    return Category::Entity;
 }
 
 sf::FloatRect EntityNode::getBoundingRect() const

@@ -30,11 +30,15 @@ namespace Category
 	enum Type
 	{
 		None				= 0,
-		Entity		        = 1 << 0,
-		Highlight           = 1 << 1,
+		Highlight           = 1 << 0,
+		PlayerEntity        = 1 << 1,
+		ComputerEntity      = 1 << 2,
+		OtherPlayerEntity   = 1 << 3,
+		HostileEntity       = 1 << 4,
+		AlliedEntity        = 1 << 5,
+		NeutralEntity       = 1 << 6,
 
-		//Creature = PlayerCreature | AlliedCreature | EnemyCreature,
-		//Projectile = AlliedProjectile | EnemyProjectile,
+        Entity = PlayerEntity | ComputerEntity | OtherPlayerEntity,
 	};
 }
 

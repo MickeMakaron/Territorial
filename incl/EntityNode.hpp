@@ -33,12 +33,12 @@
 #include "SceneNode.hpp"
 
 class CommandQueue;
-
+class Team;
 
 class EntityNode : public SceneNode
 {
     public:
-        EntityNode(int hp, sf::Vector2f position = sf::Vector2f(0, 0));
+        EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category = Category::Entity);
 
         int	            getHitpoints() const;
         void            repair(int points);
@@ -48,24 +48,36 @@ class EntityNode : public SceneNode
         virtual bool            isMarkedForRemoval() const;
         virtual void            drawCurrent(sf::RenderTarget&, sf::RenderStates) const;
         virtual void            updateCurrent(CommandQueue& commands);
-        virtual unsigned int    getCategory() const;
         virtual sf::FloatRect   getBoundingRect() const;
 
         void setTexture(const sf::Texture& texture);
         void setSprite(sf::Sprite sprite);
 
+        virtual void interact(EntityNode* target);
+        virtual void interact(sf::Vector2f target);
 
-        void setDestination(sf::Vector2f destination);
-        void moveTo(sf::Vector2f target);
+        void attack(EntityNode* target);
+        void harvest(EntityNode* target);
+        void assist(EntityNode* target);
+
+        const unsigned int& getTeam() const;
 
     private:
         void updateOrigin();
+        void moveTo(sf::Vector2f target);
 
     private:
         int	            mHp;
         sf::Sprite      mSprite;
         float           mSpeed;
         sf::Vector2f    mDestination;
+        EntityNode*     mTarget;
+
+        Team&           mTeam;
+
+        unsigned int    mHarvestCategory;
+        unsigned int    mAttackCategory;
+        unsigned int    mAssistCategory;
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP
