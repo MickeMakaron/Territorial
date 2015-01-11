@@ -157,9 +157,10 @@ std::string toString(sf::Keyboard::Key key)
 		GAME_KEYTOSTRING_CASE(F14)
 		GAME_KEYTOSTRING_CASE(F15)
 		GAME_KEYTOSTRING_CASE(Pause)
+		default:
+		    return "";
+            break;
 	}
-
-	return "";
 }
 
 void centerOrigin(sf::Sprite& sprite)
