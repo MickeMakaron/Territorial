@@ -44,12 +44,15 @@ World::World(sf::RenderWindow& window)
 
 void World::update()
 {
+    while (!mCommandQueue.isEmpty())
+		mEntitiesGraph.onCommand(mCommandQueue.pop());
+
     mCamera.update();
     mEntitiesGraph.update(mCommandQueue);
     mCursorNode.update(mCommandQueue);
 
-    while (!mCommandQueue.isEmpty())
-		mEntitiesGraph.onCommand(mCommandQueue.pop());
+
+    mEntitiesGraph.removeWrecks();
 }
 
 void World::handleEvent(const sf::Event& event)
@@ -84,6 +87,7 @@ void World::buildWorld()
     mTeams.push_back(team1);
     mTeams.push_back(team2);
 
+    mTeams[0].addHostile(team2.getId());
 
     for(int i = 0; i < 5; i++)
     {
