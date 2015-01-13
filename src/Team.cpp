@@ -75,5 +75,5 @@ bool Team::isNeutral(unsigned int teamId)
 
 bool Team::isHostile(unsigned int teamId)
 {
-    return mAllies & teamId;
+    return mHostiles & teamId;
 }
