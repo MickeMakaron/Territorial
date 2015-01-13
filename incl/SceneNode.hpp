@@ -67,7 +67,8 @@ class SceneNode : public sf::Transformable, public sf::Drawable, private sf::Non
 
         void                    eraseChildren();
 
-		void            update(CommandQueue& commands);
+		void                    update(CommandQueue& commands);
+        void                    removeWrecks();
 
 		sf::Vector2f			getWorldPosition() const;
 		sf::Transform			getWorldTransform() const;

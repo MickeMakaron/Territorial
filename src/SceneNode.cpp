@@ -114,13 +114,17 @@ void SceneNode::updateChildren(CommandQueue& commands)
 
         child->update(commands);
     }
-
-    // Remove children marked for removal.
-    auto wreckfieldBegin = std::remove_if(mChildren.begin(), mChildren.end(), std::mem_fn(&SceneNode::isMarkedForRemoval));
-    mChildren.erase(wreckfieldBegin, mChildren.end());
 }
 
+void SceneNode::removeWrecks()
+{
+	// Remove all children which request so
+	auto wreckfieldBegin = std::remove_if(mChildren.begin(), mChildren.end(), std::mem_fn(&SceneNode::isMarkedForRemoval));
+	mChildren.erase(wreckfieldBegin, mChildren.end());
 
+	// Call function recursively for all remaining children
+	std::for_each(mChildren.begin(), mChildren.end(), std::mem_fn(&SceneNode::removeWrecks));
+}
 
 void SceneNode::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
