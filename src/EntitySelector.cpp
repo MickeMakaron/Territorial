@@ -42,7 +42,7 @@ EntitySelector::EntitySelector()
     mSelectCommand.category = Category::Entity;
     mSelectCommand.action = derivedAction<EntityNode>([this](EntityNode& node)
     {
-        if(!node.isMarkedForRemoval() && intersects(mPos, node.getBoundingRect()))
+        if(!node.isMarkedForRemoval() && mSelections.size() < 1 && intersects(mPos, node.getBoundingRect()))
         {
             for(const Highlight& selection : mSelections)
                 if(selection.node == &node)
@@ -123,7 +123,7 @@ void EntitySelector::interact(sf::Vector2f pos)
     {
         for(Highlight& activation : mActivations)
             if(activation.node->getCategory() & Category::PlayerEntity)
-                activation.node->interact(pos);
+                activation.node->goTo(pos);
     }
 }
 
