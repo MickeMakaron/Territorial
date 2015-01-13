@@ -40,10 +40,11 @@ EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type
 , mSpeed(100)
 , mDestination(position)
 , mTarget(nullptr)
-, mHarvestCategory(0)
-, mAttackCategory(0)
-, mAssistCategory(Category::Entity)
+, mHarvestCategory(Category::Entity)
+, mAttackCategory(Category::Entity)
+, mHealCategory(Category::Entity)
 , mTeam(team)
+, mState(EntityState::Idle)
 {
     setPosition(position);
     updateOrigin();
@@ -67,7 +68,7 @@ void EntityNode::setSprite(sf::Sprite sprite)
     updateOrigin();
 }
 
-void EntityNode::interact(sf::Vector2f target)
+void EntityNode::goTo(sf::Vector2f target)
 {
     mDestination = target;
     mTarget = nullptr;
@@ -77,32 +78,62 @@ void EntityNode::interact(EntityNode* target)
 {
     assert(target && !target->isMarkedForRemoval());
 
-    if(target->getCategory() & mAttackCategory)
-        attack(target);
-    else if(target->getCategory() & mHarvestCategory)
+    unsigned int targetTeamId = target->getTeam();
+    unsigned int targetCategory = target->getCategory();
+
+    if(targetCategory & mAttackCategory)
+    {
+        if(mTeam.isHostile(targetTeamId))
+            attack(target);
+        else if(mTeam.isNeutral(targetTeamId))
+        {
+            // warnPlayer(target); warn player that such an action will result in hostility
+        }
+    }
+    else if(targetCategory & mHarvestCategory)
         harvest(target);
-    else if(target->getCategory() & mAssistCategory)
-        assist(target);
+    else if(mTeam.isAllied(targetTeamId))
+    {
+        if(targetCategory & mHealCategory)
+            heal(target);
+        else
+            assist(target);
+    }
     else
-        interact(target->getPosition());
+        goTo(target->getPosition());
+}
+
+void EntityNode::heal(EntityNode* target)
+{
+    mTarget = target;
+    setState(EntityState::Heal);
+}
+
+void EntityNode::setState(unsigned int state)
+{
+    // Set all bits to 0.
+    mState &= ~mState;
+
+    // Set new state.
+    mState |= state;
 }
 
 void EntityNode::attack(EntityNode* target)
 {
     mTarget = target;
+    setState(EntityState::Attack);
 }
 
 void EntityNode::harvest(EntityNode* target)
 {
     mTarget = target;
+    setState(EntityState::Harvest);
 }
 
 void EntityNode::assist(EntityNode* target)
 {
-    if(mTeam.isAllied(target->getTeam()))
-        mTarget = target;
-   // else
-       // mDestination = target->getPosition();
+    mTarget = target;
+    setState(EntityState::Assist);
 }
 
 const unsigned int& EntityNode::getTeam() const
@@ -131,6 +162,20 @@ void EntityNode::updateCurrent(CommandQueue& commands)
     {
         assert(!mTarget->isMarkedForRemoval());
         mDestination = mTarget->getPosition();
+
+        switch(mState)
+        {
+            case EntityState::Attack:
+                mTarget->damage(10);
+                if(mTarget->isMarkedForRemoval())
+                {
+                    mTarget = nullptr;
+                    setState(EntityState::Idle);
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     if(mDestination != getPosition())

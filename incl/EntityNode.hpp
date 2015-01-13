@@ -54,30 +54,43 @@ class EntityNode : public SceneNode
         void setSprite(sf::Sprite sprite);
 
         virtual void interact(EntityNode* target);
-        virtual void interact(sf::Vector2f target);
+        virtual void goTo(sf::Vector2f target);
 
         void attack(EntityNode* target);
         void harvest(EntityNode* target);
         void assist(EntityNode* target);
+        void heal(EntityNode* target);
 
         const unsigned int& getTeam() const;
 
     private:
         void updateOrigin();
         void moveTo(sf::Vector2f target);
+        void setState(unsigned int state);
 
     private:
+        enum EntityState
+        {
+            Idle        = 0,
+            Attack      = 1 << 0,
+            Assist      = 1 << 1,
+            Harvest     = 1 << 2,
+            Heal        = 1 << 3,
+        };
+
         int	            mHp;
         sf::Sprite      mSprite;
         float           mSpeed;
         sf::Vector2f    mDestination;
         EntityNode*     mTarget;
 
-        Team&           mTeam;
-
         unsigned int    mHarvestCategory;
         unsigned int    mAttackCategory;
-        unsigned int    mAssistCategory;
+        unsigned int    mHealCategory;
+        Team&           mTeam;
+        unsigned int    mState;
+
+
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP
