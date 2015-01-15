@@ -112,12 +112,19 @@ void EntitySelector::pushActivation(EntityNode* node)
 
 void EntitySelector::interact(sf::Vector2f pos)
 {
+    unsigned int numActivations = mActivations.size();
+
+    if(numActivations < 1)
+        return;
+
+
     if(mSelections.size() > 0)
     {
         for(Highlight& activation : mActivations)
             if(activation.node->getCategory() & Category::PlayerEntity)
                 for(Highlight& selection : mSelections)
                     activation.node->interact(selection.node);
+
     }
     else
     {
@@ -125,6 +132,17 @@ void EntitySelector::interact(sf::Vector2f pos)
             if(activation.node->getCategory() & Category::PlayerEntity)
                 activation.node->goTo(pos);
     }
+
+    if(numActivations > 1)
+    {
+        std::list<EntityNode*> entities;
+        for(const Highlight& activation : mActivations)
+            entities.push_back(activation.node);
+
+        mEntityMover.add(entities);
+    }
+    else
+        mEntityMover.add(mActivations.begin()->node);
 }
 
 void EntitySelector::activate()

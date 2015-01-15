@@ -25,6 +25,7 @@
 
 
 #include "Command.hpp"
+#include "EntityMover.hpp"
 
 class CommandQueue;
 class EntityNode;
@@ -98,6 +99,8 @@ class EntitySelector
 
         Command mSelectCommand;
         Command mSelectBoxCommand;
+
+        EntityMover mEntityMover;
 };
 
 
