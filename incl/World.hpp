@@ -43,6 +43,7 @@
 #include "CursorNode.hpp"
 #include "Camera.hpp"
 #include "Team.hpp"
+#include "CollissionFinder.hpp"
 
 namespace sf
 {
@@ -64,7 +65,6 @@ class World
         void moveView();
 
     private:
-        SceneNode mEntitiesGraph;
         sf::Sprite mBackground;
 
         std::vector<Team>   mTeams;
@@ -76,6 +76,9 @@ class World
         Camera mCamera;
         CommandQueue mCommandQueue;
         ResourceHolder<sf::Texture, int> mTextures;
+
+        SceneNode mEntitiesGraph;
+        CollissionFinder        mCollissionFinder;
 };
 
 #endif // ANTGAME_WORLD_HPP

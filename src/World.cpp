@@ -32,11 +32,15 @@
 #include "TIME_PER_FRAME.hpp"
 
 
+#include "CollissionFinder.hpp"
+
 World::World(sf::RenderWindow& window)
 : mWindow(window)
 , mTarget(window)
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
+, mEntitiesGraph()
+, mCollissionFinder(window.getSize())
 {
     buildWorld();
 }
@@ -51,6 +55,23 @@ void World::update()
     mEntitiesGraph.update(mCommandQueue);
     mCursorNode.update(mCommandQueue);
 
+    mCollissionFinder.update();
+
+    std::list<std::pair<EntityNode*, EntityNode*>> collissions = std::move(mCollissionFinder.getCollissions());
+
+    for(std::pair<EntityNode*, EntityNode*>& collission : collissions)
+    {
+        sf::Vector2f firstPos = collission.first->getPosition();
+        sf::Vector2f secondPos = collission.second->getPosition();
+
+        sf::Vector2f dVec = firstPos - secondPos;
+        float d = sqrtf(dVec.x * dVec.x + dVec.y * dVec.y);
+
+        sf::Vector2f unitVec = dVec / d;
+
+        collission.first->goTo(firstPos + unitVec * 10.f);
+        collission.second->goTo(secondPos - unitVec * 10.f);
+    }
 
     mEntitiesGraph.removeWrecks();
 }
@@ -66,6 +87,28 @@ void World::draw()
     mTarget.draw(mBackground);
     mTarget.draw(mEntitiesGraph);
     mTarget.draw(mCursorNode);
+
+
+    sf::RectangleShape shape;
+    shape.setFillColor(sf::Color::Transparent);
+    shape.setOutlineColor(sf::Color::Red);
+    shape.setOutlineThickness(1.f);
+
+    std::list<Quadtree*> quadtree = mCollissionFinder.getQuadtree();
+    for(Quadtree* quad : quadtree)
+    {
+        assert(quad != nullptr);
+
+        sf::FloatRect bounds = quad->getBoundingRect();
+        shape.setPosition(bounds.left, bounds.top);
+        shape.setSize(sf::Vector2f(bounds.width, bounds.height));
+
+        mTarget.draw(shape);
+    }
+
+
+
+
 }
 
 void World::buildWorld()
@@ -87,23 +130,26 @@ void World::buildWorld()
     mTeams.push_back(team1);
     mTeams.push_back(team2);
 
-    mTeams[0].addHostile(team2.getId());
+    mTeams[1].addAlly(team1.getId());
+    //mTeams[0].addHostile(team2.getId());
 
-    for(int i = 0; i < 5; i++)
-    {
-        std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::ComputerEntity));
-        antHill->setTexture(mTextures.get(1));
-        mEntitiesGraph.attachChild(std::move(antHill));
 
-        pos.x += 20;
-    }
-
-    pos.y += 50;
-    std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0]));
+    std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], Category::PlayerEntity));
     antHill->setTexture(mTextures.get(1));
+    mCollissionFinder.insertEntity(antHill.get());
     mEntitiesGraph.attachChild(std::move(antHill));
 
+    pos.y += 50;
+    for(int i = 0; i < 5; i++)
+    {
+        std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
+        antHill->setTexture(mTextures.get(1));
+        mCollissionFinder.insertEntity(antHill.get());
+        mEntitiesGraph.attachChild(std::move(antHill));
 
+        pos.x += 100;
+
+    }
 
 
     mTextures.load(2, "assets/textures/cursor.png");
