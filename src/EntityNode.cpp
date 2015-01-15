@@ -40,9 +40,9 @@ EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type
 , mSpeed(100)
 , mDestination(position)
 , mTarget(nullptr)
-, mHarvestCategory(Category::Entity)
-, mAttackCategory(Category::Entity)
-, mHealCategory(Category::Entity)
+, mHarvestCategory(0)
+, mAttackCategory(0)
+, mHealCategory(0)
 , mTeam(team)
 , mState(EntityState::Idle)
 {
@@ -70,6 +70,8 @@ void EntityNode::setSprite(sf::Sprite sprite)
 
 void EntityNode::goTo(sf::Vector2f target)
 {
+    mWayPoints.clear();
+    mWayPoints.push_back(target);
     mDestination = target;
     mTarget = nullptr;
 }
@@ -203,6 +205,11 @@ void EntityNode::repair(int points)
     assert(points > 0);
 
     mHp += points;
+}
+
+bool EntityNode::isMoving() const
+{
+    return mDestination != getPosition();
 }
 
 void EntityNode::damage(int points)

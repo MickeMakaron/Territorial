@@ -63,6 +63,8 @@ class EntityNode : public SceneNode
 
         const unsigned int& getTeam() const;
 
+        bool isMoving() const;
+
     private:
         void updateOrigin();
         void moveTo(sf::Vector2f target);
@@ -82,6 +84,7 @@ class EntityNode : public SceneNode
         sf::Sprite      mSprite;
         float           mSpeed;
         sf::Vector2f    mDestination;
+        std::list<sf::Vector2f> mWayPoints;
         EntityNode*     mTarget;
 
         unsigned int    mHarvestCategory;
