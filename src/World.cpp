@@ -130,8 +130,8 @@ void World::buildWorld()
     mTeams.push_back(team1);
     mTeams.push_back(team2);
 
-    mTeams[1].addAlly(team1.getId());
-    //mTeams[0].addHostile(team2.getId());
+    //mTeams[1].addAlly(team1.getId());
+    mTeams[0].addHostile(team2.getId());
 
 
     std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], Category::PlayerEntity));

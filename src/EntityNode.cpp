@@ -41,7 +41,7 @@ EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type
 , mDestination(position)
 , mTarget(nullptr)
 , mHarvestCategory(0)
-, mAttackCategory(0)
+, mAttackCategory(Category::Entity)
 , mHealCategory(0)
 , mTeam(team)
 , mState(EntityState::Idle)
