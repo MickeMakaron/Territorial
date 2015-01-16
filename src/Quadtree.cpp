@@ -39,25 +39,29 @@ void Quadtree::update()
 
 void Quadtree::updateTree()
 {
-    if(mChildren.empty() && (mQuadNodes.size() > MAX_NODES && mLevel < MAX_LEVELS))
+    if(mChildren.empty())
     {
-        split();
-
-        for(Node* node : mQuadNodes)
+        if(mQuadNodes.size() > MAX_NODES && mLevel < MAX_LEVELS)
         {
-            unsigned char indices = getPartialIndices(node->entity->getBoundingRect());
+            split();
 
-            if(indices & (1 << 0))
-                mChildren[0].insertNode(node);
-            if(indices & (1 << 1))
-                mChildren[1].insertNode(node);
-            if(indices & (1 << 2))
-                mChildren[2].insertNode(node);
-            if(indices & (1 << 3))
-                mChildren[3].insertNode(node);
+            for(Node* node : mQuadNodes)
+            {
+                unsigned char indices = getPartialIndices(node->entity->getBoundingRect());
+
+                if(indices & (1 << 0))
+                    mChildren[0].insertNode(node);
+                if(indices & (1 << 1))
+                    mChildren[1].insertNode(node);
+                if(indices & (1 << 2))
+                    mChildren[2].insertNode(node);
+                if(indices & (1 << 3))
+                    mChildren[3].insertNode(node);
+            }
         }
+
     }
-    else if(mQuadNodes.size() < MAX_NODES / 2)
+    else if(mQuadNodes.size() < MAX_NODES)
         merge();
 
     for(Quadtree& child : mChildren)
@@ -81,12 +85,7 @@ void Quadtree::insertEntity(EntityNode* entity)
 
 void Quadtree::updateNodes(std::list<Node*>& updatedNodes)
 {
-    std::list<std::list<Node>::iterator> markedForRemoval;
-    removeWrecks(markedForRemoval);
-
-    for(auto it : markedForRemoval)
-        eraseNode(it);
-
+    removeWrecks();
 
     for(Node& node : mNodes)
         if(node.entity->isMoving())
@@ -96,10 +95,10 @@ void Quadtree::updateNodes(std::list<Node*>& updatedNodes)
             auto iQuad = node.quads.begin();
             while(iQuad != node.quads.end())
             {
-                if(!intersects(entityRect, (*iQuad)->getBoundingRect()))
+                if(!intersects(entityRect, (*iQuad)->getBoundingRect()) && !intersects((*iQuad)->getBoundingRect(), entityRect))
                     markedForErasion.push_back(*iQuad);
-                else
-                    updatedNodes.push_back(&node);
+
+                updatedNodes.push_back(&node);
 
                 iQuad++;
             }
@@ -110,8 +109,13 @@ void Quadtree::updateNodes(std::list<Node*>& updatedNodes)
 
 void Quadtree::eraseNode(std::list<Node>::iterator iNode)
 {
+    std::list<Quadtree*> markedForRemoval;
     for(Quadtree* quad : iNode->quads)
-        quad->eraseQuadNode(&(*iNode));
+        markedForRemoval.push_back(quad);
+
+    Node* pNode = &(*iNode);
+    for(Quadtree* quad : markedForRemoval)
+        quad->eraseQuadNode(pNode);
 
     mNodes.erase(iNode);
 }
@@ -175,15 +179,20 @@ void Quadtree::insertNode(Node* node)
     }
 }
 
-void Quadtree::removeWrecks(std::list<std::list<Node>::iterator>& markedForRemoval)
+void Quadtree::removeWrecks()
 {
+    std::list<std::list<Node>::iterator> markedForRemoval;
     auto it = mNodes.begin();
     while(it != mNodes.end())
     {
         if(it->entity->isMarkedForRemoval() || it->quads.empty())
             markedForRemoval.push_back(it);
+
         it++;
     }
+
+    for(auto it : markedForRemoval)
+        eraseNode(it);
 }
 
 void Quadtree::split()
@@ -203,13 +212,16 @@ void Quadtree::split()
 
 void Quadtree::merge()
 {
-    clearChildren();
+    for(Quadtree& child : mChildren)
+        child.clear();
+
+    mChildren.clear();
 }
 
-void Quadtree::clearChildren()
+void Quadtree::clear()
 {
     for(Quadtree& child : mChildren)
-        child.clearChildren();
+        child.clear();
 
     std::list<Node*> nodes = mQuadNodes;
     for(Node* node : nodes)
@@ -274,7 +286,7 @@ std::list<std::pair<EntityNode*, EntityNode*>> Quadtree::getNearbyEntities()
 
         for(Node* nearbyNode : nearbyNodes)
         {
-            // Push collission pair into collission array if they are colliding.
+            // Push collission pair into collission array if nearby node is NOT node and they are colliding.
             if(nearbyNode != &node && intersects(node.entity->getBoundingRect(), nearbyNode->entity->getBoundingRect()))
             {
                 if(node.entity < nearbyNode->entity)

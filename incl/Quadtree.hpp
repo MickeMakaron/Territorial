@@ -48,16 +48,18 @@ class Quadtree
 
         void            insertNode(Node* node);
 
-        void            removeWrecks(std::list<std::list<Node>::iterator>& markedForRemoval);
+        void            removeWrecks();
         void            eraseNode(std::list<Node>::iterator iNode);
         void            eraseQuadNode(Node* node);
-        void            clearChildren();
+        void            clear();
+
+        void            split();
+        void            merge();
 
         bool            isOutOfBounds(EntityNode* node);
         unsigned char   getPartialIndices(sf::FloatRect nodeBounds);
 
-        void    split();
-        void    merge();
+
 
 
         bool                hasChildren();
