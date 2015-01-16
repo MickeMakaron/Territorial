@@ -40,7 +40,7 @@ World::World(sf::RenderWindow& window)
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
 , mEntitiesGraph()
-, mCollissionFinder(window.getSize())
+, mCollissionHandler(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y))
 {
     buildWorld();
 }
@@ -54,24 +54,7 @@ void World::update()
     mCamera.update();
     mEntitiesGraph.update(mCommandQueue);
     mCursorNode.update(mCommandQueue);
-
-    mCollissionFinder.update();
-
-    std::list<std::pair<EntityNode*, EntityNode*>> collissions = std::move(mCollissionFinder.getCollissions());
-
-    for(std::pair<EntityNode*, EntityNode*>& collission : collissions)
-    {
-        sf::Vector2f firstPos = collission.first->getPosition();
-        sf::Vector2f secondPos = collission.second->getPosition();
-
-        sf::Vector2f dVec = firstPos - secondPos;
-        float d = sqrtf(dVec.x * dVec.x + dVec.y * dVec.y);
-
-        sf::Vector2f unitVec = dVec / d;
-
-        collission.first->goTo(firstPos + unitVec * 10.f);
-        collission.second->goTo(secondPos - unitVec * 10.f);
-    }
+    mCollissionHandler.update();
 
     mEntitiesGraph.removeWrecks();
 }
@@ -89,6 +72,8 @@ void World::draw()
     mTarget.draw(mCursorNode);
 
 
+// Quadtree debugging
+/*
     sf::RectangleShape shape;
     shape.setFillColor(sf::Color::Transparent);
     shape.setOutlineColor(sf::Color::Red);
@@ -106,7 +91,7 @@ void World::draw()
         mTarget.draw(shape);
     }
 
-
+*/
 
 
 }
@@ -136,7 +121,7 @@ void World::buildWorld()
 
     std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], Category::PlayerEntity));
     antHill->setTexture(mTextures.get(1));
-    mCollissionFinder.insertEntity(antHill.get());
+    mCollissionHandler.insert(antHill.get());
     mEntitiesGraph.attachChild(std::move(antHill));
 
     pos.y += 50;
@@ -144,7 +129,7 @@ void World::buildWorld()
     {
         std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
         antHill->setTexture(mTextures.get(1));
-        mCollissionFinder.insertEntity(antHill.get());
+        mCollissionHandler.insert(antHill.get());
         mEntitiesGraph.attachChild(std::move(antHill));
 
         pos.x += 100;

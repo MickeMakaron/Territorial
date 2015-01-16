@@ -263,7 +263,7 @@ unsigned char Quadtree::getPartialIndices(sf::FloatRect nodeBounds)
 
 std::list<std::pair<EntityNode*, EntityNode*>> Quadtree::getNearbyEntities()
 {
-    std::list<std::pair<EntityNode*, EntityNode*>> collissions;
+    std::list<std::pair<EntityNode*, EntityNode*>> nearbyPairs;
     for(Node& node : mNodes)
     {
         std::list<Node*> nearbyNodes;
@@ -286,21 +286,26 @@ std::list<std::pair<EntityNode*, EntityNode*>> Quadtree::getNearbyEntities()
 
         for(Node* nearbyNode : nearbyNodes)
         {
-            // Push collission pair into collission array if nearby node is NOT node and they are colliding.
-            if(nearbyNode != &node && intersects(node.entity->getBoundingRect(), nearbyNode->entity->getBoundingRect()))
+            // Push nearby pair into collission array if nearby node is NOT node.
+            if(nearbyNode != &node)
             {
+                // Order pair by pointer value.
                 if(node.entity < nearbyNode->entity)
-                    collissions.push_back(std::make_pair(node.entity, nearbyNode->entity));
+                    nearbyPairs.push_back(std::make_pair(node.entity, nearbyNode->entity));
                 else
-                    collissions.push_back(std::make_pair(nearbyNode->entity, node.entity));
+                    nearbyPairs.push_back(std::make_pair(nearbyNode->entity, node.entity));
             }
         }
     }
 
-    // Remove duplicate entries.
-    collissions.unique([](std::pair<EntityNode*, EntityNode*>& a, std::pair<EntityNode*, EntityNode*>& b){return a.first == b.first;});
+    /*
+     * Remove duplicate entries. Since the pairs are ordered by pointer value
+     * we are guaranteed to catch duplicates.
+     */
+    nearbyPairs.unique([](std::pair<EntityNode*, EntityNode*>& a, std::pair<EntityNode*, EntityNode*>& b){return a.first == b.first;});
 
-    return std::move(collissions);
+    // Move the list out of here to avoid copying large-sized lists.
+    return std::move(nearbyPairs);
 }
 
 

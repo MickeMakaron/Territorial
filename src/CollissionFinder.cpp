@@ -1,7 +1,9 @@
 #include "CollissionFinder.hpp"
 
-CollissionFinder::CollissionFinder(sf::Vector2u mapSize)
-: mQuadtree(sf::FloatRect(0, 0, mapSize.x, mapSize.y), mNodes)
+#include "Utility.hpp"
+
+CollissionFinder::CollissionFinder(sf::FloatRect area)
+: mQuadtree(area, mNodes)
 {
 
 }
@@ -25,7 +27,32 @@ void CollissionFinder::insertEntity(EntityNode* entity)
         mQuadtree.insertEntity(entity);
 }
 
-std::list<std::pair<EntityNode*, EntityNode*>> CollissionFinder::getCollissions()
+std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions()
 {
-    return std::move(mQuadtree.getNearbyEntities());
+    std::list<std::pair<EntityNode*, EntityNode*>> nearbyEntities = mQuadtree.getNearbyEntities();
+
+    std::list<CollissionData> collissions;
+    for(auto pair : nearbyEntities)
+    {
+        float radiusSum = pair.first->getBoundingRect().width / 2 + pair.second->getBoundingRect().width / 2;
+
+        sf::Vector2f dVec = pair.first->getPosition() - pair.second->getPosition();
+
+        float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
+
+        if(dSqrd < radiusSum * radiusSum)
+        {
+            CollissionData collission;
+            collission.lNode = pair.first;
+            collission.rNode = pair.second;
+
+            float d = sqrtf(dSqrd);
+            collission.penetrationDepth = radiusSum - d;
+            collission.unitVector = dVec / d;
+
+            collissions.push_back(collission);
+        }
+    }
+
+    return collissions;
 }

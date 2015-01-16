@@ -12,18 +12,28 @@
 class CollissionFinder
 {
     public:
-        CollissionFinder(sf::Vector2u mapSize);
+        struct CollissionData
+        {
+            EntityNode* lNode;
+            EntityNode* rNode;
+
+            float           penetrationDepth;
+            sf::Vector2f    unitVector;
+        };
+
+        CollissionFinder(sf::FloatRect area);
 
         void    update();
 
         std::list<Quadtree*>& getQuadtree();
         void  insertEntity(EntityNode* entity);
-        std::list<std::pair<EntityNode*, EntityNode*>> getCollissions();
+        std::list<CollissionData> getCollissions();
 
     private:
-        std::list<Quadtree*>    mBottomQuads;
-        Quadtree                mQuadtree;
-        std::list<Quadtree::Node>         mNodes;
+        std::list<Quadtree*>        mBottomQuads;
+
+        Quadtree                    mQuadtree;
+        std::list<Quadtree::Node>   mNodes;
 };
 
 #endif //ANTGAME_COLLISSIONFINDER_HPP
