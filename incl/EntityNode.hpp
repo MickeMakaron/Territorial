@@ -31,6 +31,8 @@
 
 
 #include "SceneNode.hpp"
+#include "EntityMover.hpp"
+#include "EntityState.hpp"
 
 class CommandQueue;
 class Team;
@@ -38,6 +40,16 @@ class Team;
 class EntityNode : public SceneNode
 {
     public:
+        enum State
+        {
+            Idle,
+            Move,
+            Attack,
+            Assist,
+            Harvest,
+            Heal,
+        };
+
         EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category = Category::Entity);
 
         int	            getHitpoints() const;
@@ -55,6 +67,7 @@ class EntityNode : public SceneNode
 
         virtual void interact(EntityNode* target);
         virtual void goTo(sf::Vector2f target);
+        virtual void appendGoTo(sf::Vector2f target);
 
         void attack(EntityNode* target);
         void harvest(EntityNode* target);
@@ -64,36 +77,31 @@ class EntityNode : public SceneNode
         const unsigned int& getTeam() const;
 
         bool isMoving() const;
+        float getSpeed() const;
 
     private:
         void updateOrigin();
         void moveTo(sf::Vector2f target);
-        void setState(unsigned int state);
+        void setState(std::unique_ptr<EntityState> state);
+        void pushState(std::unique_ptr<EntityState> state);
 
     private:
-        enum EntityState
-        {
-            Idle        = 0,
-            Attack      = 1 << 0,
-            Assist      = 1 << 1,
-            Harvest     = 1 << 2,
-            Heal        = 1 << 3,
-        };
-
         int	            mHp;
         sf::Sprite      mSprite;
         float           mSpeed;
         sf::Vector2f    mDestination;
-        std::list<sf::Vector2f> mWayPoints;
+        std::list<EntityMover::Waypoint> mWayPoints;
+        std::list<std::unique_ptr<EntityState>>  mStateQueue;
+        std::unique_ptr<EntityState> mDefaultState;
         EntityNode*     mTarget;
 
         unsigned int    mHarvestCategory;
         unsigned int    mAttackCategory;
         unsigned int    mHealCategory;
         Team&           mTeam;
-        unsigned int    mState;
 
 
+        EntityMover     mEntityMover;
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP

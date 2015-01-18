@@ -56,6 +56,7 @@ class EntitySelector
         void startSelection(sf::Vector2f pos);
         void endSelection(sf::Vector2f pos);
         void interact(sf::Vector2f pos);
+        void appendInteract(sf::Vector2f pos);
         void setPosition(sf::Vector2f pos);
 
         void removeWrecks();
@@ -101,8 +102,6 @@ class EntitySelector
 
         Command mSelectCommand;
         Command mSelectBoxCommand;
-
-        EntityMover mEntityMover;
 };
 
 

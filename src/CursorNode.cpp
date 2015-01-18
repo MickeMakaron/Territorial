@@ -61,7 +61,12 @@ void CursorNode::handleEvent(const sf::Event& event)
             if(event.mouseButton.button == sf::Mouse::Button::Left)
                 mEntitySelector.endSelection(getWorldPosition());
             else if(event.mouseButton.button == sf::Mouse::Button::Right)
-                mEntitySelector.interact(getWorldPosition());
+            {
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift))
+                    mEntitySelector.appendInteract(getWorldPosition());
+                else
+                    mEntitySelector.interact(getWorldPosition());
+            }
             break;
         default:
             break;

@@ -20,27 +20,44 @@
 ****************************************************************
 ****************************************************************/
 
-#ifndef GAME_CATEGORY_HPP
-#define GAME_CATEGORY_HPP
+#ifndef ANTGAME_ENTITYSTATE_HPP
+#define ANTGAME_ENTITYSTATE_HPP
 
+class EntityNode;
+#include "EntityMover.hpp"
 
-// Entity/scene node category, used to dispatch commands
-namespace Category
+#include "SFML/Graphics/RenderTarget.hpp"
+
+class EntityState
 {
-	enum Type
-	{
-		None				= 0,
-		Highlight           = 1 << 0,
-		PlayerEntity        = 1 << 1,
-		ComputerEntity      = 1 << 2,
-		OtherPlayerEntity   = 1 << 3,
-		HostileEntity       = 1 << 4,
-		AlliedEntity        = 1 << 5,
-		NeutralEntity       = 1 << 6,
-		EntityMover         = 1 << 7,
+    public:
+        EntityState(EntityNode& entity);
 
-        Entity = PlayerEntity | ComputerEntity | OtherPlayerEntity,
-	};
-}
+        virtual void update();
+        virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+        virtual bool isDone() const;
+        virtual void initialize();
 
-#endif // GAME_CATEGORY_HPP
+    protected:
+        EntityNode& mEntity;
+};
+
+
+class EntityStateMove : public EntityState
+{
+    public:
+        EntityStateMove(EntityNode& entity, sf::Vector2f target);
+
+        virtual void update();
+        virtual bool isDone() const;
+        virtual void initialize();
+
+    private:
+        std::list<EntityMover::Waypoint>    mWaypoints;
+        EntityMover                         mEntityMover;
+        sf::Vector2f                        mTarget;
+        bool                                mIsInitialized;
+};
+
+
+#endif // ANTGAME_ENTITYSTATE_HPP

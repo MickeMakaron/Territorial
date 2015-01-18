@@ -32,8 +32,8 @@
 ////////////////////////////////////////////////
 
 #include "CommandQueue.hpp"
-#include "TIME_PER_FRAME.hpp"
 
+#include "EntityMover.hpp"
 EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category)
 : SceneNode(category)
 , mHp(hp)
@@ -44,8 +44,10 @@ EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type
 , mAttackCategory(Category::Entity)
 , mHealCategory(0)
 , mTeam(team)
-, mState(EntityState::Idle)
+, mDefaultState(new EntityState(*this))
 {
+    setState(std::move(std::unique_ptr<EntityState>(new EntityState(*this))));
+
     setPosition(position);
     updateOrigin();
 }
@@ -68,12 +70,28 @@ void EntityNode::setSprite(sf::Sprite sprite)
     updateOrigin();
 }
 
+float EntityNode::getSpeed() const
+{
+    return mSpeed;
+}
+
 void EntityNode::goTo(sf::Vector2f target)
 {
+    auto waypoints = mEntityMover.getPath(getPosition(), target);
+    setState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
+
+    /*
     mWayPoints.clear();
     mWayPoints.push_back(target);
     mDestination = target;
     mTarget = nullptr;
+    */
+}
+
+void EntityNode::appendGoTo(sf::Vector2f target)
+{
+    auto waypoints = mEntityMover.getPath(getPosition(), target);
+    pushState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
 }
 
 void EntityNode::interact(EntityNode* target)
@@ -108,34 +126,36 @@ void EntityNode::interact(EntityNode* target)
 void EntityNode::heal(EntityNode* target)
 {
     mTarget = target;
-    setState(EntityState::Heal);
+    //setState(State::Heal);
 }
 
-void EntityNode::setState(unsigned int state)
+void EntityNode::setState(std::unique_ptr<EntityState> state)
 {
-    // Set all bits to 0.
-    mState &= ~mState;
+    mStateQueue.clear();
+    mStateQueue.push_back(std::move(state));
+}
 
-    // Set new state.
-    mState |= state;
+void EntityNode::pushState(std::unique_ptr<EntityState> state)
+{
+    mStateQueue.push_back(std::move(state));
 }
 
 void EntityNode::attack(EntityNode* target)
 {
     mTarget = target;
-    setState(EntityState::Attack);
+    //setState(State::Attack);
 }
 
 void EntityNode::harvest(EntityNode* target)
 {
     mTarget = target;
-    setState(EntityState::Harvest);
+    //setState(State::Harvest);
 }
 
 void EntityNode::assist(EntityNode* target)
 {
     mTarget = target;
-    setState(EntityState::Assist);
+    //setState(State::Assist);
 }
 
 const unsigned int& EntityNode::getTeam() const
@@ -143,36 +163,36 @@ const unsigned int& EntityNode::getTeam() const
     return mTeam.getId();
 }
 
-void EntityNode::moveTo(sf::Vector2f target)
-{
-    sf::Vector2f dVec = target - getPosition();
-    float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
-    float step = mSpeed * TIME_PER_FRAME::S;
-    if(dSqrd < step * step)
-        setPosition(target);
-    else
-    {
-        float d = sqrtf(dSqrd);
-        sf::Vector2f unitVec = dVec / d;
-        move(unitVec * step);
-    }
-}
 
 void EntityNode::updateCurrent(CommandQueue& commands)
 {
+    if(!mStateQueue.empty())
+    {
+        EntityState* pState = mStateQueue.front().get();
+        pState->update();
+
+        if(pState->isDone())
+            mStateQueue.pop_front();
+    }
+    else
+        mDefaultState->update();
+
+
+/*
     if(mTarget)
     {
         assert(!mTarget->isMarkedForRemoval());
-        mDestination = mTarget->getPosition();
+
+        mWayPoints = mEntityMover.getPath(getPosition(), mTarget->getPosition());
 
         switch(mState)
         {
-            case EntityState::Attack:
+            case State::Attack:
                 mTarget->damage(10);
                 if(mTarget->isMarkedForRemoval())
                 {
                     mTarget = nullptr;
-                    setState(EntityState::Idle);
+                    setState(State::Idle);
                 }
                 break;
             default:
@@ -180,10 +200,11 @@ void EntityNode::updateCurrent(CommandQueue& commands)
         }
     }
 
-    if(mDestination != getPosition())
-        moveTo(mDestination);
+    move();
 
+    */
 }
+
 
 void EntityNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
 {
@@ -209,7 +230,7 @@ void EntityNode::repair(int points)
 
 bool EntityNode::isMoving() const
 {
-    return mDestination != getPosition();
+    return mWayPoints.size() > 0;
 }
 
 void EntityNode::damage(int points)
