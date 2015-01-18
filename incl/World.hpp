@@ -43,7 +43,7 @@
 #include "CursorNode.hpp"
 #include "Camera.hpp"
 #include "Team.hpp"
-#include "CollissionHandler.hpp"
+#include "CollissionManager.hpp"
 
 namespace sf
 {
@@ -77,8 +77,8 @@ class World
         CommandQueue mCommandQueue;
         ResourceHolder<sf::Texture, int> mTextures;
 
-        SceneNode               mEntitiesGraph;
-        CollissionHandler        mCollissionHandler;
+        SceneNode           mEntitiesGraph;
+        CollissionManager   mCollissionManager;
 };
 
 #endif // ANTGAME_WORLD_HPP

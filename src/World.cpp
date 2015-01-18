@@ -40,7 +40,7 @@ World::World(sf::RenderWindow& window)
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
 , mEntitiesGraph()
-, mCollissionHandler(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y))
+, mCollissionManager(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y))
 {
     buildWorld();
 }
@@ -54,10 +54,13 @@ void World::update()
     mCamera.update();
     mEntitiesGraph.update(mCommandQueue);
     mCursorNode.update(mCommandQueue);
-    mCollissionHandler.update();
+    mCollissionManager.update();
 
+    mCursorNode.removeWrecks();
+    mCollissionManager.removeWrecks();
     mEntitiesGraph.removeWrecks();
 }
+
 
 void World::handleEvent(const sf::Event& event)
 {
@@ -73,13 +76,13 @@ void World::draw()
 
 
 // Quadtree debugging
-/*
+
     sf::RectangleShape shape;
     shape.setFillColor(sf::Color::Transparent);
     shape.setOutlineColor(sf::Color::Red);
     shape.setOutlineThickness(1.f);
 
-    std::list<Quadtree*> quadtree = mCollissionFinder.getQuadtree();
+    std::list<Quadtree*> quadtree = mCollissionManager.getQuadtree();
     for(Quadtree* quad : quadtree)
     {
         assert(quad != nullptr);
@@ -91,7 +94,7 @@ void World::draw()
         mTarget.draw(shape);
     }
 
-*/
+
 
 
 }
@@ -121,7 +124,7 @@ void World::buildWorld()
 
     std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], Category::PlayerEntity));
     antHill->setTexture(mTextures.get(1));
-    mCollissionHandler.insert(antHill.get());
+    mCollissionManager.insertEntity(antHill.get());
     mEntitiesGraph.attachChild(std::move(antHill));
 
     pos.y += 50;
@@ -129,7 +132,7 @@ void World::buildWorld()
     {
         std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
         antHill->setTexture(mTextures.get(1));
-        mCollissionHandler.insert(antHill.get());
+        mCollissionManager.insertEntity(antHill.get());
         mEntitiesGraph.attachChild(std::move(antHill));
 
         pos.x += 100;
