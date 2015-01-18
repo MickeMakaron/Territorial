@@ -21,29 +21,13 @@
 ****************************************************************/
 
 #include "CollissionHandler.hpp"
+#include "EntityNode.hpp"
 
-#include "Utility.hpp"
-
-CollissionHandler::CollissionHandler(sf::FloatRect area)
-: mCollissionFinder(area)
+void CollissionHandler::handleCollissions(std::list<CollissionData> collissions)
 {
-
-}
-
-void CollissionHandler::update()
-{
-    std::list<CollissionData> collissions = mCollissionFinder.getCollissions();
-
-    for(CollissionFinder::CollissionData& collission : collissions)
+    for(CollissionData& collission : collissions)
     {
         collission.lNode->goTo(collission.lNode->getPosition() + collission.unitVector * 10.f);
         collission.rNode->goTo(collission.rNode->getPosition() - collission.unitVector * 10.f);
     }
 }
-
-void CollissionHandler::insert(EntityNode* entity)
-{
-    mCollissionFinder.insertEntity(entity);
-}
-
-

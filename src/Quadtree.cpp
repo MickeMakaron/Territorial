@@ -92,11 +92,14 @@ void Quadtree::updateTree()
 
 void Quadtree::insertEntity(EntityNode* entity)
 {
+    // Do nothing if entity is marked for removal.
+    if(entity->isMarkedForRemoval())
+        return;
+
+    // Do nothing if entity already exists in tree.
     for(Node& node : mNodes)
-    {
         if(node.entity == entity)
             return;
-    }
 
     Node node;
     node.entity = entity;
@@ -105,10 +108,20 @@ void Quadtree::insertEntity(EntityNode* entity)
     insertNode(&(*insertionIt));
 }
 
+void Quadtree::eraseEntity(EntityNode* entity)
+{
+    for(auto it = mNodes.begin(); it != mNodes.end(); it++)
+    {
+        if(it->entity == entity)
+        {
+            eraseNode(it);
+            return;
+        }
+    }
+}
+
 void Quadtree::updateNodes(std::list<Node*>& updatedNodes)
 {
-    removeWrecks();
-
     for(Node& node : mNodes)
         if(node.entity->isMoving())
         {

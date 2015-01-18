@@ -1,6 +1,3 @@
-#ifndef ANTGAME_COLLISSIONFINDER_HPP
-#define ANTGAME_COLLISSIONFINDER_HPP
-
 /****************************************************************
 ****************************************************************
 *
@@ -24,31 +21,37 @@
 ****************************************************************/
 
 
-////////////////////////////////////////////////
-// STD - C++ Standard Library
-#include <list>
-////////////////////////////////////////////////
+#include "CollissionManager.hpp"
 
-////////////////////////////////////////////////
-// SFML - Simple and Fast Media Library
-#include "SFML/System/Vector2.hpp"
-////////////////////////////////////////////////
-
-class EntityNode;
-
-class CollissionFinder
+CollissionManager::CollissionManager(sf::FloatRect area)
+: mFinder()
+, mHandler()
+, mQuadtree(area, mQuadtreeNodes)
 {
-    public:
-        struct CollissionData
-        {
-            EntityNode* lNode;
-            EntityNode* rNode;
+}
 
-            float           penetrationDepth;
-            sf::Vector2f    unitVector;
-        };
+void CollissionManager::update()
+{
+    mQuadtree.update();
 
-        std::list<CollissionData> getCollissions(std::list<std::pair<EntityNode*, EntityNode*>>& nearbyEntities);
-};
+    std::list<std::pair<EntityNode*, EntityNode*>> nearbyEntities = mQuadtree.getNearbyEntities();
+    mHandler.handleCollissions(mFinder.getCollissions(nearbyEntities));
+}
 
-#endif //ANTGAME_COLLISSIONFINDER_HPP
+void CollissionManager::insertEntity(EntityNode* entity)
+{
+    mQuadtree.insertEntity(entity);
+}
+
+void CollissionManager::removeWrecks()
+{
+    mQuadtree.removeWrecks();
+}
+
+std::list<Quadtree*> CollissionManager::getQuadtree()
+{
+    std::list<Quadtree*> quadtree;
+    mQuadtree.getQuadtree(quadtree);
+
+    return quadtree;
+}

@@ -51,6 +51,7 @@ class Quadtree
 
         void    update();
         void    insertEntity(EntityNode* entity);
+        void eraseEntity(EntityNode* entity);
 
         /////////////////////////////////////////////////////////
         // For testing purposes
@@ -60,6 +61,7 @@ class Quadtree
         std::list<std::pair<EntityNode*, EntityNode*>> getNearbyEntities();
 
         sf::FloatRect getBoundingRect();
+        void    removeWrecks();
 
     private:
                 Quadtree(int level, sf::FloatRect bounds, std::list<Node>& nodes);
@@ -70,7 +72,7 @@ class Quadtree
 
         void            insertNode(Node* node);
 
-        void            removeWrecks();
+
         void            eraseNode(std::list<Node>::iterator iNode);
         void            eraseQuadNode(Node* node);
         void            clear();

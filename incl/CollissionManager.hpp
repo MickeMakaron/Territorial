@@ -1,6 +1,3 @@
-#ifndef ANTGAME_COLLISSIONFINDER_HPP
-#define ANTGAME_COLLISSIONFINDER_HPP
-
 /****************************************************************
 ****************************************************************
 *
@@ -23,32 +20,44 @@
 ****************************************************************
 ****************************************************************/
 
+#ifndef ANTGAME_COLLISSIONMANAGER_HPP
+#define ANTGAME_COLLISSIONMANAGER_HPP
 
 ////////////////////////////////////////////////
 // STD - C++ Standard Library
 #include <list>
+#include <memory>
 ////////////////////////////////////////////////
+
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
-#include "SFML/System/Vector2.hpp"
+#include "SFML/System/Time.hpp"
+#include "SFML/Graphics/Sprite.hpp"
+#include "SFML/Graphics/Texture.hpp"
 ////////////////////////////////////////////////
 
-class EntityNode;
+#include "Quadtree.hpp"
+#include "CollissionFinder.hpp"
+#include "CollissionHandler.hpp"
 
-class CollissionFinder
+class CollissionManager
 {
     public:
-        struct CollissionData
-        {
-            EntityNode* lNode;
-            EntityNode* rNode;
+        CollissionManager(sf::FloatRect area);
 
-            float           penetrationDepth;
-            sf::Vector2f    unitVector;
-        };
+        void    update();
+        void    insertEntity(EntityNode* entity);
+        void    removeWrecks();
 
-        std::list<CollissionData> getCollissions(std::list<std::pair<EntityNode*, EntityNode*>>& nearbyEntities);
+        std::list<Quadtree*> getQuadtree(); ///< For Quadtree debugging.
+
+    private:
+        CollissionFinder    mFinder;
+        CollissionHandler   mHandler;
+        Quadtree            mQuadtree;
+        std::list<Quadtree::Node> mQuadtreeNodes;
 };
 
-#endif //ANTGAME_COLLISSIONFINDER_HPP
+
+#endif // ANTGAME_COLLISSIONMANAGER_HPP

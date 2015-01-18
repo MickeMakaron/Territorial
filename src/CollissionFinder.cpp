@@ -21,38 +21,10 @@
 ****************************************************************/
 
 #include "CollissionFinder.hpp"
+#include "EntityNode.hpp"
 
-#include "Utility.hpp"
-
-CollissionFinder::CollissionFinder(sf::FloatRect area)
-: mQuadtree(area, mNodes)
+std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions(std::list<std::pair<EntityNode*, EntityNode*>>& nearbyEntities)
 {
-
-}
-
-void CollissionFinder::update()
-{
-    mQuadtree.update();
-}
-
-std::list<Quadtree*>& CollissionFinder::getQuadtree()
-{
-    mBottomQuads.clear();
-    mQuadtree.getQuadtree(mBottomQuads);
-
-    return mBottomQuads;
-}
-
-void CollissionFinder::insertEntity(EntityNode* entity)
-{
-    if(!entity->isMarkedForRemoval())
-        mQuadtree.insertEntity(entity);
-}
-
-std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions()
-{
-    std::list<std::pair<EntityNode*, EntityNode*>> nearbyEntities = mQuadtree.getNearbyEntities();
-
     std::list<CollissionData> collissions;
     for(auto pair : nearbyEntities)
     {

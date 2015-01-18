@@ -30,18 +30,13 @@
 
 #include "CollissionFinder.hpp"
 
-
 class CollissionHandler
 {
     public:
-        CollissionHandler(sf::FloatRect area);
-
-        void    update();
-        void    insert(EntityNode* entity);
+        void    handleCollissions(std::list<CollissionFinder::CollissionData> collissions);
 
     private:
         typedef CollissionFinder::CollissionData CollissionData;
-        CollissionFinder    mCollissionFinder;
 };
 
 #endif //ANTGAME_COLLISSIONHANDLER_HPP
