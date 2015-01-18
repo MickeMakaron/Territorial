@@ -256,7 +256,6 @@ void EntitySelector::removeWrecks()
 
 void EntitySelector::update(CommandQueue& commands)
 {
-    removeWrecks();
     refreshSelections(commands);
 
 

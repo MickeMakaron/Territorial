@@ -55,7 +55,7 @@ class CursorNode : public SceneNode
 		virtual void    drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
 		virtual sf::FloatRect getBoundingRect() const;
 
-
+        void removeWrecks();
 
     private:
         void setVisible();
@@ -69,7 +69,7 @@ class CursorNode : public SceneNode
         sf::IntRect         mTextureRect;
         sf::RenderWindow&   mWindow;
         sf::RenderTarget&   mTarget;
-        sf::Vector2f        mLastPos;
+
         EntitySelector      mEntitySelector;
 };
 

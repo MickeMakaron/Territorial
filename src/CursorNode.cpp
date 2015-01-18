@@ -42,8 +42,11 @@ void CursorNode::handleEvent(const sf::Event& event)
 {
     switch(event.type)
     {
-       // case sf::Event::MouseMoved:
-       //     break;
+        case sf::Event::MouseMoved:
+            mEntitySelector.setPosition(getWorldPosition());
+            if(mEntitySelector.isSelecting())
+                mEntitySelector.updateSelection(getWorldPosition());
+            break;
         case sf::Event::MouseLeft:
             setInvisible();
             break;
@@ -100,28 +103,17 @@ void CursorNode::setInvisible()
     mSprite.setTextureRect(sf::IntRect(0, 0, 0, 0));
 }
 
+void CursorNode::removeWrecks()
+{
+    mEntitySelector.removeWrecks();
+}
 
 void CursorNode::updateCurrent(CommandQueue& commands)
 {
     setPosition(pix2coords(sf::Mouse::getPosition(mWindow)));
-
-
-    if(hasMoved())
-    {
-        mEntitySelector.setPosition(getWorldPosition());
-
-        if(mEntitySelector.isSelecting())
-            mEntitySelector.updateSelection(getWorldPosition());
-    }
-
     mEntitySelector.update(commands);
-    mLastPos = getWorldPosition();
 }
 
-bool CursorNode::hasMoved() const
-{
-    return getWorldPosition() != mLastPos;
-}
 
 void CursorNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
 {

@@ -58,6 +58,8 @@ class EntitySelector
         void interact(sf::Vector2f pos);
         void setPosition(sf::Vector2f pos);
 
+        void removeWrecks();
+
     private:
         struct Highlight
         {
@@ -79,7 +81,7 @@ class EntitySelector
         void pushSelection(EntityNode* node);
         void pushActivation(EntityNode* node);
 
-        void removeWrecks();
+
 
 
 
