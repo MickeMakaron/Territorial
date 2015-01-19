@@ -93,15 +93,13 @@ class EntityNode : public SceneNode
 
         sf::Sprite      mSprite;
 
-        sf::Vector2f    mLastPos;
-
-        std::list<std::unique_ptr<EntityState>>  mStateQueue;
-        std::unique_ptr<EntityState> mDefaultState;
-
         unsigned int    mHarvestCategory;
         unsigned int    mAttackCategory;
         unsigned int    mHealCategory;
         Team&           mTeam;
+
+        std::list<std::unique_ptr<EntityState>>  mStateQueue;
+        std::unique_ptr<EntityState> mDefaultState;
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP

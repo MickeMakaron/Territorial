@@ -177,39 +177,11 @@ void EntityNode::updateCurrent(CommandQueue& commands)
     }
     else
         mDefaultState->update();
-
-
-    mLastPos = getPosition();
-/*
-    if(mTarget)
-    {
-        assert(!mTarget->isMarkedForRemoval());
-
-        mWayPoints = mEntityMover.getPath(getPosition(), mTarget->getPosition());
-
-        switch(mState)
-        {
-            case State::Attack:
-                mTarget->damage(10);
-                if(mTarget->isMarkedForRemoval())
-                {
-                    mTarget = nullptr;
-                    setState(State::Idle);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    move();
-
-    */
 }
 
 bool EntityNode::isMoving() const
 {
-    return !mStateQueue.empty() && !mStateQueue.front()->isDone();
+    return !mStateQueue.empty() && mStateQueue.front()->isMoving();
 }
 
 void EntityNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
