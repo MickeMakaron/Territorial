@@ -51,6 +51,12 @@ void EntityState::initialize()
     // Do nothing by default.
 }
 
+bool EntityState::isMoving() const
+{
+    // Not moving by default.
+    return false;
+}
+
 
 EntityStateMove::EntityStateMove(EntityNode& entity, sf::Vector2f target)
 : EntityState(entity)
@@ -73,6 +79,11 @@ void EntityStateMove::setTarget(sf::Vector2f target)
 {
     mTarget = target;
     initialize();
+}
+
+bool EntityStateMove::isMoving() const
+{
+    return !mWaypoints.empty();
 }
 
 void EntityStateMove::update()
@@ -101,16 +112,11 @@ void EntityStateMove::update()
 }
 
 EntityStateAttack::EntityStateAttack(EntityNode& entity, EntityNode* target)
-: EntityState(entity)
-, mMoveState(entity, target->getPosition())
+: EntityStateMove(entity, target->getPosition())
 , mTarget(target)
 {
 }
 
-void EntityStateAttack::initialize()
-{
-    mMoveState.initialize();
-}
 
 bool EntityStateAttack::isInAttackRange(sf::Vector2f target) const
 {
@@ -123,13 +129,13 @@ bool EntityStateAttack::isInAttackRange(sf::Vector2f target) const
 
 void EntityStateAttack::update()
 {
-    mMoveState.update();
+    EntityStateMove::update();
 
     sf::Vector2f targetPosition = mTarget->getPosition();
 
     // If target is moving, get new path.
     if(mTarget->isMoving())
-        mMoveState.setTarget(targetPosition);
+        EntityStateMove::setTarget(targetPosition);
 
     // Attack if in range.
     if(isInAttackRange(targetPosition))

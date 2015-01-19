@@ -38,6 +38,8 @@ class EntityState
         virtual bool isDone() const;
         virtual void initialize();
 
+        virtual bool isMoving() const;
+
     protected:
         EntityNode& mEntity;
 };
@@ -52,6 +54,7 @@ class EntityStateMove : public EntityState
         virtual bool isDone() const;
         virtual void initialize();
 
+        virtual bool isMoving() const;
         void setTarget(sf::Vector2f target);
 
     private:
@@ -61,20 +64,18 @@ class EntityStateMove : public EntityState
 };
 
 
-class EntityStateAttack : public EntityState
+class EntityStateAttack : public EntityStateMove
 {
     public:
         EntityStateAttack(EntityNode& entity, EntityNode* target);
 
         virtual void update();
         virtual bool isDone() const;
-        virtual void initialize();
 
     private:
         bool isInAttackRange(sf::Vector2f target) const;
 
     private:
-        EntityStateMove mMoveState;
         EntityNode*     mTarget;
 };
 
