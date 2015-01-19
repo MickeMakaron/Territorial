@@ -55,8 +55,7 @@ class EntitySelector
         void updateSelection(sf::Vector2f pos);
         void startSelection(sf::Vector2f pos);
         void endSelection(sf::Vector2f pos);
-        void interact(sf::Vector2f pos);
-        void appendInteract(sf::Vector2f pos);
+        void interact(sf::Vector2f pos, bool isAppending = false);
         void setPosition(sf::Vector2f pos);
 
         void removeWrecks();

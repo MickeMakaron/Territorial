@@ -52,12 +52,30 @@ class EntityStateMove : public EntityState
         virtual bool isDone() const;
         virtual void initialize();
 
+        void setTarget(sf::Vector2f target);
+
     private:
         std::list<EntityMover::Waypoint>    mWaypoints;
         EntityMover                         mEntityMover;
         sf::Vector2f                        mTarget;
-        bool                                mIsInitialized;
 };
 
+
+class EntityStateAttack : public EntityState
+{
+    public:
+        EntityStateAttack(EntityNode& entity, EntityNode* target);
+
+        virtual void update();
+        virtual bool isDone() const;
+        virtual void initialize();
+
+    private:
+        bool isInAttackRange(sf::Vector2f target) const;
+
+    private:
+        EntityStateMove mMoveState;
+        EntityNode*     mTarget;
+};
 
 #endif // ANTGAME_ENTITYSTATE_HPP

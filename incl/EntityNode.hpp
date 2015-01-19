@@ -65,18 +65,19 @@ class EntityNode : public SceneNode
         void setTexture(const sf::Texture& texture);
         void setSprite(sf::Sprite sprite);
 
-        virtual void interact(EntityNode* target);
-        virtual void goTo(sf::Vector2f target);
-        virtual void appendGoTo(sf::Vector2f target);
+        virtual void interact(EntityNode* target, bool isAppending = false);
+        virtual void goTo(sf::Vector2f target, bool isAppending = false);
 
-        void attack(EntityNode* target);
-        void harvest(EntityNode* target);
-        void assist(EntityNode* target);
-        void heal(EntityNode* target);
+        void attack(EntityNode* target, bool isAppending = false);
+        void harvest(EntityNode* target, bool isAppending = false);
+        void assist(EntityNode* target, bool isAppending = false);
+        void heal(EntityNode* target, bool isAppending = false);
 
         const unsigned int& getTeam() const;
 
-        bool isMoving() const;
+        bool  isMoving() const;
+        bool  isDestroyed() const;
+        float getAttackRange() const;
         float getSpeed() const;
 
     private:
@@ -87,21 +88,20 @@ class EntityNode : public SceneNode
 
     private:
         int	            mHp;
-        sf::Sprite      mSprite;
         float           mSpeed;
-        sf::Vector2f    mDestination;
-        std::list<EntityMover::Waypoint> mWayPoints;
+        float           mAttackRange;
+
+        sf::Sprite      mSprite;
+
+        sf::Vector2f    mLastPos;
+
         std::list<std::unique_ptr<EntityState>>  mStateQueue;
         std::unique_ptr<EntityState> mDefaultState;
-        EntityNode*     mTarget;
 
         unsigned int    mHarvestCategory;
         unsigned int    mAttackCategory;
         unsigned int    mHealCategory;
         Team&           mTeam;
-
-
-        EntityMover     mEntityMover;
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP

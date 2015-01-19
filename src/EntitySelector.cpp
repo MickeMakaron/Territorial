@@ -110,7 +110,7 @@ void EntitySelector::pushActivation(EntityNode* node)
 	mActivations.push_back(Highlight(node, shape));
 }
 
-void EntitySelector::interact(sf::Vector2f pos)
+void EntitySelector::interact(sf::Vector2f pos, bool isAppending)
 {
     if(mActivations.size() == 0)
         return;
@@ -120,35 +120,14 @@ void EntitySelector::interact(sf::Vector2f pos)
         for(Highlight& activation : mActivations)
             if(activation.node->getCategory() & Category::PlayerEntity)
                 for(Highlight& selection : mSelections)
-                    activation.node->interact(selection.node);
+                    activation.node->interact(selection.node, isAppending);
 
     }
     else
     {
         for(Highlight& activation : mActivations)
             if(activation.node->getCategory() & Category::PlayerEntity)
-                activation.node->goTo(pos);
-    }
-}
-
-void EntitySelector::appendInteract(sf::Vector2f pos)
-{
-    if(mActivations.size() == 0)
-        return;
-
-    if(mSelections.size() > 0)
-    {
-        for(Highlight& activation : mActivations)
-            if(activation.node->getCategory() & Category::PlayerEntity)
-                for(Highlight& selection : mSelections)
-                    activation.node->interact(selection.node);
-
-    }
-    else
-    {
-        for(Highlight& activation : mActivations)
-            if(activation.node->getCategory() & Category::PlayerEntity)
-                activation.node->appendGoTo(pos);
+                activation.node->goTo(pos, isAppending);
     }
 }
 

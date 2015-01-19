@@ -38,16 +38,13 @@ EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type
 : SceneNode(category)
 , mHp(hp)
 , mSpeed(100)
-, mDestination(position)
-, mTarget(nullptr)
+, mAttackRange(40)
 , mHarvestCategory(0)
 , mAttackCategory(Category::Entity)
 , mHealCategory(0)
 , mTeam(team)
 , mDefaultState(new EntityState(*this))
 {
-    setState(std::move(std::unique_ptr<EntityState>(new EntityState(*this))));
-
     setPosition(position);
     updateOrigin();
 }
@@ -75,26 +72,8 @@ float EntityNode::getSpeed() const
     return mSpeed;
 }
 
-void EntityNode::goTo(sf::Vector2f target)
-{
-    auto waypoints = mEntityMover.getPath(getPosition(), target);
-    setState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
 
-    /*
-    mWayPoints.clear();
-    mWayPoints.push_back(target);
-    mDestination = target;
-    mTarget = nullptr;
-    */
-}
-
-void EntityNode::appendGoTo(sf::Vector2f target)
-{
-    auto waypoints = mEntityMover.getPath(getPosition(), target);
-    pushState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
-}
-
-void EntityNode::interact(EntityNode* target)
+void EntityNode::interact(EntityNode* target, bool isAppending)
 {
     assert(target && !target->isMarkedForRemoval());
 
@@ -104,58 +83,74 @@ void EntityNode::interact(EntityNode* target)
     if(targetCategory & mAttackCategory)
     {
         if(mTeam.isHostile(targetTeamId))
-            attack(target);
+            attack(target, isAppending);
         else if(mTeam.isNeutral(targetTeamId))
         {
             // warnPlayer(target); warn player that such an action will result in hostility
         }
     }
     else if(targetCategory & mHarvestCategory)
-        harvest(target);
+        harvest(target, isAppending);
     else if(mTeam.isAllied(targetTeamId))
     {
         if(targetCategory & mHealCategory)
-            heal(target);
+            heal(target, isAppending);
         else
-            assist(target);
+            assist(target, isAppending);
     }
     else
-        goTo(target->getPosition());
+        goTo(target->getPosition(), isAppending);
 }
 
-void EntityNode::heal(EntityNode* target)
+
+void EntityNode::goTo(sf::Vector2f target, bool isAppending)
 {
-    mTarget = target;
+    if(isAppending)
+        pushState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
+    else
+        setState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
+}
+
+void EntityNode::heal(EntityNode* target, bool isAppending)
+{
+    //mTarget = target;
     //setState(State::Heal);
 }
+
+void EntityNode::attack(EntityNode* target, bool isAppending)
+{
+    if(isAppending)
+        pushState(std::move(std::unique_ptr<EntityStateAttack>(new EntityStateAttack(*this, target))));
+    else
+        setState(std::move(std::unique_ptr<EntityStateAttack>(new EntityStateAttack(*this, target))));
+}
+
+void EntityNode::harvest(EntityNode* target, bool isAppending)
+{
+    //mTarget = target;
+    //setState(State::Harvest);
+}
+
+void EntityNode::assist(EntityNode* target, bool isAppending)
+{
+    //mTarget = target;
+    //setState(State::Assist);
+}
+
 
 void EntityNode::setState(std::unique_ptr<EntityState> state)
 {
     mStateQueue.clear();
+    state->initialize();
     mStateQueue.push_back(std::move(state));
 }
 
 void EntityNode::pushState(std::unique_ptr<EntityState> state)
 {
+    if(mStateQueue.empty())
+        state->initialize();
+
     mStateQueue.push_back(std::move(state));
-}
-
-void EntityNode::attack(EntityNode* target)
-{
-    mTarget = target;
-    //setState(State::Attack);
-}
-
-void EntityNode::harvest(EntityNode* target)
-{
-    mTarget = target;
-    //setState(State::Harvest);
-}
-
-void EntityNode::assist(EntityNode* target)
-{
-    mTarget = target;
-    //setState(State::Assist);
 }
 
 const unsigned int& EntityNode::getTeam() const
@@ -172,12 +167,19 @@ void EntityNode::updateCurrent(CommandQueue& commands)
         pState->update();
 
         if(pState->isDone())
+        {
             mStateQueue.pop_front();
+
+            if(!mStateQueue.empty())
+                mStateQueue.front()->initialize();
+        }
+
     }
     else
         mDefaultState->update();
 
 
+    mLastPos = getPosition();
 /*
     if(mTarget)
     {
@@ -205,6 +207,10 @@ void EntityNode::updateCurrent(CommandQueue& commands)
     */
 }
 
+bool EntityNode::isMoving() const
+{
+    return !mStateQueue.empty() && !mStateQueue.front()->isDone();
+}
 
 void EntityNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
 {
@@ -221,16 +227,22 @@ int EntityNode::getHitpoints() const
     return mHp;
 }
 
+bool  EntityNode::isDestroyed() const
+{
+    return mHp <= 0;
+}
+
+
+float EntityNode::getAttackRange() const
+{
+    return mAttackRange;
+}
+
 void EntityNode::repair(int points)
 {
     assert(points > 0);
 
     mHp += points;
-}
-
-bool EntityNode::isMoving() const
-{
-    return mWayPoints.size() > 0;
 }
 
 void EntityNode::damage(int points)

@@ -27,7 +27,7 @@ void CollissionHandler::handleCollissions(std::list<CollissionData> collissions)
 {
     for(CollissionData& collission : collissions)
     {
-        collission.lNode->goTo(collission.lNode->getPosition() + collission.unitVector * 10.f);
-        collission.rNode->goTo(collission.rNode->getPosition() - collission.unitVector * 10.f);
+        //collission.lNode->goTo(collission.lNode->getPosition() + collission.unitVector * 10.f);
+        //collission.rNode->goTo(collission.rNode->getPosition() - collission.unitVector * 10.f);
     }
 }

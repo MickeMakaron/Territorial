@@ -55,7 +55,6 @@ void EntityState::initialize()
 EntityStateMove::EntityStateMove(EntityNode& entity, sf::Vector2f target)
 : EntityState(entity)
 , mTarget(target)
-, mIsInitialized(false)
 {
 
 }
@@ -63,7 +62,6 @@ EntityStateMove::EntityStateMove(EntityNode& entity, sf::Vector2f target)
 void EntityStateMove::initialize()
 {
     mWaypoints = mEntityMover.getPath(mEntity.getPosition(), mTarget);
-    mIsInitialized = true;
 }
 
 bool EntityStateMove::isDone() const
@@ -71,11 +69,14 @@ bool EntityStateMove::isDone() const
     return mWaypoints.empty();
 }
 
+void EntityStateMove::setTarget(sf::Vector2f target)
+{
+    mTarget = target;
+    initialize();
+}
+
 void EntityStateMove::update()
 {
-    if(!mIsInitialized)
-        initialize();
-
     if(mWaypoints.empty())
         return;
 
@@ -97,4 +98,45 @@ void EntityStateMove::update()
 
     mEntity.move(wp.direction * step);
     wp.distance -= step;
+}
+
+EntityStateAttack::EntityStateAttack(EntityNode& entity, EntityNode* target)
+: EntityState(entity)
+, mMoveState(entity, target->getPosition())
+, mTarget(target)
+{
+}
+
+void EntityStateAttack::initialize()
+{
+    mMoveState.initialize();
+}
+
+bool EntityStateAttack::isInAttackRange(sf::Vector2f target) const
+{
+    sf::Vector2f dVec = target - mEntity.getPosition();
+    float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
+    float attackRange = mEntity.getAttackRange();
+
+    return dSqrd < attackRange * attackRange;
+}
+
+void EntityStateAttack::update()
+{
+    mMoveState.update();
+
+    sf::Vector2f targetPosition = mTarget->getPosition();
+
+    // If target is moving, get new path.
+    if(mTarget->isMoving())
+        mMoveState.setTarget(targetPosition);
+
+    // Attack if in range.
+    if(isInAttackRange(targetPosition))
+        mTarget->damage(10);
+}
+
+bool EntityStateAttack::isDone() const
+{
+    return mTarget->isDestroyed();
 }
