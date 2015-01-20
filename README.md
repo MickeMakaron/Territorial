@@ -1,4 +1,4 @@
-#Territorial
+#![territorial logo](http://mikael.hernvall.com/file/playhouse/img/Territorial.png) Territorial
 
 A game of territorial ants!
 
