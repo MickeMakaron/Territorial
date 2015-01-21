@@ -50,7 +50,7 @@ class CollissionManager
         void    insertEntity(EntityNode* entity);
         void    removeWrecks();
 
-        std::list<Quadtree*> getQuadtree(); ///< For Quadtree debugging.
+        std::list<const Quadtree*> getQuadtree() const; ///< For Quadtree debugging.
 
     private:
         CollissionFinder    mFinder;

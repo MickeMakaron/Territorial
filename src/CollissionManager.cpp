@@ -48,9 +48,9 @@ void CollissionManager::removeWrecks()
     mQuadtree.removeWrecks();
 }
 
-std::list<Quadtree*> CollissionManager::getQuadtree()
+std::list<const Quadtree*> CollissionManager::getQuadtree() const
 {
-    std::list<Quadtree*> quadtree;
+    std::list<const Quadtree*> quadtree;
     mQuadtree.getQuadtree(quadtree);
 
     return quadtree;

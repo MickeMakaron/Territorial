@@ -55,12 +55,12 @@ class Quadtree
 
         /////////////////////////////////////////////////////////
         // For testing purposes
-        void    getQuadtree(std::list<Quadtree*>& qtree);
+        void    getQuadtree(std::list<const Quadtree*>& qtree) const;
         /////////////////////////////////////////////////////////
 
         std::list<std::pair<EntityNode*, EntityNode*>> getNearbyEntities();
 
-        sf::FloatRect getBoundingRect();
+        sf::FloatRect getBoundingRect() const;
         void    removeWrecks();
 
     private:

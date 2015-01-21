@@ -155,7 +155,7 @@ void Quadtree::eraseNode(std::list<Node>::iterator iNode)
     mNodes.erase(iNode);
 }
 
-sf::FloatRect Quadtree::getBoundingRect()
+sf::FloatRect Quadtree::getBoundingRect() const
 {
     return mBounds;
 }
@@ -355,11 +355,11 @@ std::list<Quadtree::Node*> Quadtree::getQuadNodes()
 }
 
 
-void Quadtree::getQuadtree(std::list<Quadtree*>& qtree)
+void Quadtree::getQuadtree(std::list<const Quadtree*>& qtree) const
 {
     qtree.push_back(this);
 
-    for(Quadtree& child : mChildren)
+    for(const Quadtree& child : mChildren)
     {
         child.getQuadtree(qtree);
     }
