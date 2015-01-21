@@ -32,18 +32,29 @@
 ////////////////////////////////////////////////
 
 #include "CommandQueue.hpp"
-
 #include "EntityMover.hpp"
+
+EntityNode::Attributes::Attributes(int baseHp, float baseMovementSpeed, int baseAttackDamage, float baseAttackRange)
+: baseHp(baseHp)
+, hp(baseHp)
+, baseMovementSpeed(baseMovementSpeed)
+, movementSpeed(baseMovementSpeed)
+, baseAttackDamage(baseAttackDamage)
+, attackDamage(baseAttackDamage)
+, baseAttackRange(baseAttackRange)
+, attackRange(baseAttackRange)
+{
+
+}
+
 EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category)
 : SceneNode(category)
-, mHp(hp)
-, mSpeed(100)
-, mAttackRange(40)
+, mAttributes(hp, 100, 10, 40)
 , mHarvestCategory(0)
 , mAttackCategory(Category::Entity)
 , mHealCategory(0)
 , mTeam(team)
-, mDefaultState(new EntityState(*this))
+, mStateQueue(StateQueue::StatePtr(new EntityState(*this)))
 {
     setPosition(position);
     updateOrigin();
@@ -67,17 +78,16 @@ void EntityNode::setSprite(sf::Sprite sprite)
     updateOrigin();
 }
 
-float EntityNode::getSpeed() const
+const EntityNode::Attributes& EntityNode::getAttributes() const
 {
-    return mSpeed;
+    return mAttributes;
 }
-
 
 void EntityNode::interact(EntityNode* target, bool isAppending)
 {
     assert(target && !target->isMarkedForRemoval());
 
-    unsigned int targetTeamId = target->getTeam();
+    unsigned int targetTeamId = target->getTeamId();
     unsigned int targetCategory = target->getCategory();
 
     if(targetCategory & mAttackCategory)
@@ -106,9 +116,9 @@ void EntityNode::interact(EntityNode* target, bool isAppending)
 void EntityNode::goTo(sf::Vector2f target, bool isAppending)
 {
     if(isAppending)
-        pushState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
+        mStateQueue.pushState(std::move(StateQueue::StatePtr(new EntityStateMove(*this, target))));
     else
-        setState(std::move(std::unique_ptr<EntityStateMove>(new EntityStateMove(*this, target))));
+        mStateQueue.setState(std::move(StateQueue::StatePtr(new EntityStateMove(*this, target))));
 }
 
 void EntityNode::heal(EntityNode* target, bool isAppending)
@@ -120,9 +130,9 @@ void EntityNode::heal(EntityNode* target, bool isAppending)
 void EntityNode::attack(EntityNode* target, bool isAppending)
 {
     if(isAppending)
-        pushState(std::move(std::unique_ptr<EntityStateAttack>(new EntityStateAttack(*this, target))));
+        mStateQueue.pushState(std::move(StateQueue::StatePtr(new EntityStateAttack(*this, target))));
     else
-        setState(std::move(std::unique_ptr<EntityStateAttack>(new EntityStateAttack(*this, target))));
+        mStateQueue.setState(std::move(StateQueue::StatePtr(new EntityStateAttack(*this, target))));
 }
 
 void EntityNode::harvest(EntityNode* target, bool isAppending)
@@ -137,51 +147,19 @@ void EntityNode::assist(EntityNode* target, bool isAppending)
     //setState(State::Assist);
 }
 
-
-void EntityNode::setState(std::unique_ptr<EntityState> state)
-{
-    mStateQueue.clear();
-    state->initialize();
-    mStateQueue.push_back(std::move(state));
-}
-
-void EntityNode::pushState(std::unique_ptr<EntityState> state)
-{
-    if(mStateQueue.empty())
-        state->initialize();
-
-    mStateQueue.push_back(std::move(state));
-}
-
-const unsigned int& EntityNode::getTeam() const
+unsigned int EntityNode::getTeamId() const
 {
     return mTeam.getId();
 }
 
-
 void EntityNode::updateCurrent(CommandQueue& commands)
 {
-    if(!mStateQueue.empty())
-    {
-        EntityState* pState = mStateQueue.front().get();
-        pState->update();
-
-        if(pState->isDone())
-        {
-            mStateQueue.pop_front();
-
-            if(!mStateQueue.empty())
-                mStateQueue.front()->initialize();
-        }
-
-    }
-    else
-        mDefaultState->update();
+    mStateQueue.update();
 }
 
 bool EntityNode::isMoving() const
 {
-    return !mStateQueue.empty() && mStateQueue.front()->isMoving();
+    return mStateQueue.getState()->isMoving();
 }
 
 void EntityNode::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
@@ -194,40 +172,23 @@ sf::FloatRect EntityNode::getBoundingRect() const
     return getWorldTransform().transformRect(mSprite.getGlobalBounds());
 }
 
-int EntityNode::getHitpoints() const
-{
-    return mHp;
-}
 
 bool  EntityNode::isDestroyed() const
 {
-    return mHp <= 0;
-}
-
-
-float EntityNode::getAttackRange() const
-{
-    return mAttackRange;
-}
-
-void EntityNode::repair(int points)
-{
-    assert(points > 0);
-
-    mHp += points;
+    return mAttributes.baseHp > 0 && mAttributes.hp <= 0;
 }
 
 void EntityNode::damage(int points)
 {
-    mHp -= points;
+    mAttributes.hp -= points;
 }
 
 void EntityNode::destroy()
 {
-    mHp = 0;
+    mAttributes.hp = 0;
 }
 
 bool EntityNode::isMarkedForRemoval() const
 {
-    return mHp <= 0;
+    return isDestroyed();
 }

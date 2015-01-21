@@ -93,7 +93,7 @@ void EntityStateMove::update()
 
     EntityMover::Waypoint& wp = mWaypoints.front();
 
-    float step = mEntity.getSpeed() * TIME_PER_FRAME::S;
+    float step = mEntity.getAttributes().movementSpeed * TIME_PER_FRAME::S;
     while(wp.distance < step)
     {
         mEntity.setPosition(wp.destination);
@@ -122,7 +122,7 @@ bool EntityStateAttack::isInAttackRange(sf::Vector2f target) const
 {
     sf::Vector2f dVec = target - mEntity.getPosition();
     float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
-    float attackRange = mEntity.getAttackRange();
+    float attackRange = mEntity.getAttributes().attackRange;
 
     return dSqrd < attackRange * attackRange;
 }

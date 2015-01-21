@@ -32,7 +32,7 @@
 
 #include "SceneNode.hpp"
 #include "EntityMover.hpp"
-#include "EntityState.hpp"
+#include "StateQueue.hpp"
 
 class CommandQueue;
 class Team;
@@ -40,20 +40,28 @@ class Team;
 class EntityNode : public SceneNode
 {
     public:
-        enum State
+        struct Attributes
         {
-            Idle,
-            Move,
-            Attack,
-            Assist,
-            Harvest,
-            Heal,
+            Attributes(int baseHp, float baseMovementSpeed, int attackDamage, float attackRange);
+
+            const int   baseHp;
+            int         hp;
+
+            const float baseMovementSpeed;
+            float       movementSpeed;
+
+            const int   baseAttackDamage;
+            int         attackDamage;
+
+            const float baseAttackRange;
+            float       attackRange;
         };
+
+    public:
+
 
         EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category = Category::Entity);
 
-        int	            getHitpoints() const;
-        void            repair(int points);
         void            damage(int points);
         void            destroy();
 
@@ -68,28 +76,23 @@ class EntityNode : public SceneNode
         virtual void interact(EntityNode* target, bool isAppending = false);
         virtual void goTo(sf::Vector2f target, bool isAppending = false);
 
+        const Attributes& getAttributes() const;
+        unsigned int getTeamId() const;
+
+        bool  isMoving() const;
+        bool  isDestroyed() const;
+
+    private:
+        void updateOrigin();
+
         void attack(EntityNode* target, bool isAppending = false);
         void harvest(EntityNode* target, bool isAppending = false);
         void assist(EntityNode* target, bool isAppending = false);
         void heal(EntityNode* target, bool isAppending = false);
 
-        const unsigned int& getTeam() const;
-
-        bool  isMoving() const;
-        bool  isDestroyed() const;
-        float getAttackRange() const;
-        float getSpeed() const;
 
     private:
-        void updateOrigin();
-        void moveTo(sf::Vector2f target);
-        void setState(std::unique_ptr<EntityState> state);
-        void pushState(std::unique_ptr<EntityState> state);
-
-    private:
-        int	            mHp;
-        float           mSpeed;
-        float           mAttackRange;
+        Attributes      mAttributes;
 
         sf::Sprite      mSprite;
 
@@ -98,8 +101,7 @@ class EntityNode : public SceneNode
         unsigned int    mHealCategory;
         Team&           mTeam;
 
-        std::list<std::unique_ptr<EntityState>>  mStateQueue;
-        std::unique_ptr<EntityState> mDefaultState;
+        StateQueue      mStateQueue;
 };
 
 #endif // ANTGAME_ENTITYNODE_HPP
