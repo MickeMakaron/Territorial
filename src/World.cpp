@@ -39,26 +39,20 @@ World::World(sf::RenderWindow& window)
 , mTarget(window)
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
-, mEntitiesGraph()
-, mCollissionManager(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y))
+, mEntitiesManager(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y), mCommandQueue)
 {
     buildWorld();
 }
 
-
 void World::update()
 {
-    while (!mCommandQueue.isEmpty())
-		mEntitiesGraph.onCommand(mCommandQueue.pop());
 
     mCamera.update();
-    mEntitiesGraph.update(mCommandQueue);
     mCursorNode.update(mCommandQueue);
-    mCollissionManager.update();
+    mEntitiesManager.update();
 
     mCursorNode.removeWrecks();
-    mCollissionManager.removeWrecks();
-    mEntitiesGraph.removeWrecks();
+    mEntitiesManager.removeWrecks();
 }
 
 
@@ -71,32 +65,8 @@ void World::handleEvent(const sf::Event& event)
 void World::draw()
 {
     mTarget.draw(mBackground);
-    mTarget.draw(mEntitiesGraph);
+    mTarget.draw(mEntitiesManager);
     mTarget.draw(mCursorNode);
-
-
-// Quadtree debugging
-
-    sf::RectangleShape shape;
-    shape.setFillColor(sf::Color::Transparent);
-    shape.setOutlineColor(sf::Color::Red);
-    shape.setOutlineThickness(1.f);
-
-    std::list<Quadtree*> quadtree = mCollissionManager.getQuadtree();
-    for(Quadtree* quad : quadtree)
-    {
-        assert(quad != nullptr);
-
-        sf::FloatRect bounds = quad->getBoundingRect();
-        shape.setPosition(bounds.left, bounds.top);
-        shape.setSize(sf::Vector2f(bounds.width, bounds.height));
-
-        mTarget.draw(shape);
-    }
-
-
-
-
 }
 
 void World::buildWorld()
@@ -124,18 +94,16 @@ void World::buildWorld()
 
     std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], Category::PlayerEntity));
     antHill->setTexture(mTextures.get(1));
-    mCollissionManager.insertEntity(antHill.get());
-    mEntitiesGraph.attachChild(std::move(antHill));
+    mEntitiesManager.insertEntity(std::move(antHill));
 
     pos.y += 50;
-    for(int i = 0; i < 5; i++)
+    for(int i = 0; i < 10; i++)
     {
         std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
         antHill->setTexture(mTextures.get(1));
-        mCollissionManager.insertEntity(antHill.get());
-        mEntitiesGraph.attachChild(std::move(antHill));
+        mEntitiesManager.insertEntity(std::move(antHill));
 
-        pos.x += 100;
+        pos.x += 50;
 
     }
 

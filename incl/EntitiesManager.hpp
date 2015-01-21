@@ -20,64 +20,45 @@
 ****************************************************************
 ****************************************************************/
 
-#ifndef ANTGAME_WORLD_HPP
-#define ANTGAME_WORLD_HPP
+#ifndef ANTGAME_ENTITIESMANAGER_HPP
+#define ANTGAME_ENTITIESMANAGER_HPP
 
 ////////////////////////////////////////////////
 // STD - C++ Standard Library
-#include <list>
 #include <memory>
 ////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
-#include "SFML/System/Time.hpp"
-#include "SFML/Graphics/Sprite.hpp"
-#include "SFML/Graphics/Texture.hpp"
+#include "SFML/Graphics/RenderTarget.hpp"
 ////////////////////////////////////////////////
 
+
 #include "EntityNode.hpp"
-#include "ResourceHolder.hpp"
-#include "CommandQueue.hpp"
-#include "CursorNode.hpp"
-#include "Camera.hpp"
-#include "Team.hpp"
-#include "EntitiesManager.hpp"
+#include "CollissionManager.hpp"
 
-namespace sf
-{
-    class RenderWindow;
-    class RenderTarget;
-}
+class CommandQueue;
 
-class World
+class EntitiesManager : public sf::Drawable
 {
     public:
-        World(sf::RenderWindow& window);
-        void draw();
+        EntitiesManager(sf::FloatRect mapRect, CommandQueue& commandQueue);
+
         void update();
         void handleEvent(const sf::Event& event);
+        virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+
+        void removeWrecks();
+
+        void insertEntity(std::unique_ptr<EntityNode> entity);
+
 
 
     private:
-        void buildWorld();
-        void moveView();
-
-    private:
-        sf::Sprite mBackground;
-
-        std::vector<Team>   mTeams;
-
-
-        sf::RenderWindow& mWindow;
-        sf::RenderTarget& mTarget;
-        CursorNode mCursorNode;
-        Camera mCamera;
-        CommandQueue mCommandQueue;
-        ResourceHolder<sf::Texture, int> mTextures;
-
-        EntitiesManager     mEntitiesManager;
+        CommandQueue&       mCommandQueue;
+        SceneNode           mEntitiesGraph;
+        CollissionManager   mCollissionManager;
 };
 
-#endif // ANTGAME_WORLD_HPP
+#endif // ANTGAME_ENTITIESMANAGER_HPP
