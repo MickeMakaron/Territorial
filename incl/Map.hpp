@@ -20,66 +20,35 @@
 ****************************************************************
 ****************************************************************/
 
-#ifndef ANTGAME_WORLD_HPP
-#define ANTGAME_WORLD_HPP
-
-////////////////////////////////////////////////
-// STD - C++ Standard Library
-#include <list>
-#include <memory>
-////////////////////////////////////////////////
-
+#ifndef ANTGAME_MAP_HPP
+#define ANTGAME_MAP_HPP
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
-#include "SFML/System/Time.hpp"
-#include "SFML/Graphics/Sprite.hpp"
+#include "SFML/Graphics/Drawable.hpp"
+#include "SFML/Graphics/VertexArray.hpp"
 #include "SFML/Graphics/Texture.hpp"
+#include "SFML/Graphics/View.hpp"
+#include "SFML/Graphics/RectangleShape.hpp"
 ////////////////////////////////////////////////
 
-#include "EntityNode.hpp"
-#include "ResourceHolder.hpp"
-#include "CommandQueue.hpp"
-#include "CursorNode.hpp"
-#include "Camera.hpp"
-#include "Team.hpp"
-#include "EntitiesManager.hpp"
-#include "Map.hpp"
-
-namespace sf
-{
-    class RenderWindow;
-    class RenderTarget;
-}
-
-class World
+class Map : public sf::Drawable
 {
     public:
-        World(sf::RenderWindow& window);
-        void draw();
-        void update();
-        void handleEvent(const sf::Event& event);
+        Map(const std::string& filePath);
+
+        void load(const std::string& filePath);
+        sf::FloatRect getBounds() const;
+
+        virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
 
     private:
-        void buildWorld();
-        void moveView();
+        float               mTileSize;
 
-    private:
-        Map           mMap;
-        sf::Sprite mBackground;
+        sf::Texture         mTexture;
+        sf::RectangleShape  mDrawShape;
 
-        std::vector<Team>   mTeams;
-
-
-        sf::RenderWindow& mWindow;
-        sf::RenderTarget& mTarget;
-        CursorNode mCursorNode;
-        Camera mCamera;
-        CommandQueue mCommandQueue;
-        ResourceHolder<sf::Texture, int> mTextures;
-
-        EntitiesManager     mEntitiesManager;
 };
 
-#endif // ANTGAME_WORLD_HPP
+#endif //ANTGAME_MAP_HPP

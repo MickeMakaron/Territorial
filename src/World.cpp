@@ -39,14 +39,14 @@ World::World(sf::RenderWindow& window)
 , mTarget(window)
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
-, mEntitiesManager(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y), mCommandQueue)
+, mMap("assets/maps/1.png")
+, mEntitiesManager(mMap.getBounds(), mCommandQueue)
 {
     buildWorld();
 }
 
 void World::update()
 {
-
     mCamera.update();
     mCursorNode.update(mCommandQueue);
     mEntitiesManager.update();
@@ -59,18 +59,21 @@ void World::update()
 void World::handleEvent(const sf::Event& event)
 {
     mCursorNode.handleEvent(event);
+    mCamera.handleEvent(event);
 }
 
 
 void World::draw()
 {
-    mTarget.draw(mBackground);
+    //mTarget.draw(mBackground);
+    mTarget.draw(mMap);
     mTarget.draw(mEntitiesManager);
     mTarget.draw(mCursorNode);
+
 }
 
 void World::buildWorld()
-{
+{/*
     sf::Texture bgTexture;
     bgTexture.loadFromFile("assets/textures/grass.png");
     bgTexture.setRepeated(true);
@@ -78,7 +81,7 @@ void World::buildWorld()
 
     mBackground.setTexture(mTextures.get(0));
     mBackground.setTextureRect(sf::IntRect(0, 0, 500, 500));
-
+*/
     mTextures.load(1, "assets/textures/anthill_large.png");
     sf::Vector2f pos(200, 200);
 
@@ -97,15 +100,22 @@ void World::buildWorld()
     mEntitiesManager.insertEntity(std::move(antHill));
 
     pos.y += 50;
-    for(int i = 0; i < 10; i++)
+    for(int y = 0; y < 10; y++)
     {
-        std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
-        antHill->setTexture(mTextures.get(1));
-        mEntitiesManager.insertEntity(std::move(antHill));
+        for(int x = 0; x < 100; x++)
+        {
+            std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
+            antHill->setTexture(mTextures.get(1));
+            mEntitiesManager.insertEntity(std::move(antHill));
 
-        pos.x += 50;
+            pos.x += 50;
 
+        }
+
+        pos.x -= 50 * 100;
+        pos.y += 50;
     }
+
 
 
     mTextures.load(2, "assets/textures/cursor.png");
