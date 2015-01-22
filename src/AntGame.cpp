@@ -25,6 +25,7 @@
 #include "World.hpp"
 #include "TIME_PER_FRAME.hpp"
 
+#include <sstream>
 
 AntGame::AntGame(unsigned int sizeX, unsigned int sizeY)
 : mWindow(sf::VideoMode(sizeX, sizeY), "Ant game", sf::Style::Titlebar | sf::Style::Close)
@@ -83,5 +84,9 @@ void AntGame::run()
             ticks++;
         }
         render();
+
+        std::ostringstream stream;
+        stream << "Ant game | FPS: " << 1 / dt.asSeconds();
+        mWindow.setTitle(stream.str());
     }
 }
