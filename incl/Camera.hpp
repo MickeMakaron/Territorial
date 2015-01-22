@@ -49,7 +49,13 @@ class Camera
          */
         void update();
 
+
+        void handleEvent(const sf::Event& event);
+
+
     private:
+        void move(sf::Vector2f distance);
+        void zoom(float factor);
         void moveToMouse();
 
     private:
@@ -57,6 +63,7 @@ class Camera
         sf::RenderTarget& mTarget; ///< SFML rendering target to assign view to.
         sf::View mView; ///< SFML View object.
         float mSpeed; ///< SFML speed of camera when moving.
+        float mZoom;
 };
 
 

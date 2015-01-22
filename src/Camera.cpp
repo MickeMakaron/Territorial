@@ -39,8 +39,41 @@ Camera::Camera(sf::RenderWindow& window, sf::RenderTarget& target)
 , mTarget(target)
 , mView(mTarget.getView())
 , mSpeed(500.f)
+, mZoom(1.f)
 {
 
+}
+
+void Camera::handleEvent(const sf::Event& event)
+{
+    if(event.type == sf::Event::MouseWheelMoved)
+    {
+        // If scrolling forwards, zoom in.
+        if(event.mouseWheel.delta < 0)
+            zoom(2.f);
+        // If scrolling backwards, zoom out.
+        else
+            zoom(0.5f);
+    }
+}
+
+void Camera::move(sf::Vector2f distance)
+{
+    mView.move(distance);
+    mTarget.setView(mView);
+}
+
+void Camera::zoom(float factor)
+{
+    float zoom = mZoom * factor;
+    if(zoom < 0.25f || zoom > 4.f)
+        return;
+    else
+    {
+        mZoom = zoom;
+        mView.zoom(factor);
+        mTarget.setView(mView);
+    }
 }
 
 void Camera::update()
@@ -62,8 +95,7 @@ void Camera::update()
     if(direction.x || direction.y)
     {
         sf::Vector2f distance = direction * mSpeed * TIME_PER_FRAME::S;
-        mView.move(distance);
-        mTarget.setView(mView);
+        move(distance);
     }
     else
         moveToMouse();
@@ -87,7 +119,6 @@ void Camera::moveToMouse()
         sf::Vector2f unitVec = dVec / d;
 
         sf::Vector2f distance = unitVec * mSpeed * TIME_PER_FRAME::S;
-        mView.move(distance);
-        mTarget.setView(mView);
+        move(distance);
     }
 }
