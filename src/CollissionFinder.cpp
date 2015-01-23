@@ -23,7 +23,7 @@
 #include "CollissionFinder.hpp"
 #include "EntityNode.hpp"
 
-std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions(std::list<std::pair<EntityNode*, EntityNode*>>& nearbyEntities)
+std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions(std::set<std::pair<EntityNode*, EntityNode*>>& nearbyEntities)
 {
     std::list<CollissionData> collissions;
     for(auto pair : nearbyEntities)

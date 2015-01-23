@@ -27,6 +27,7 @@
 ////////////////////////////////////////////////
 // STD - C++ Standard Library
 #include <list>
+#include <set>
 ////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
@@ -48,7 +49,7 @@ class CollissionFinder
             sf::Vector2f    unitVector;
         };
 
-        std::list<CollissionData> getCollissions(std::list<std::pair<EntityNode*, EntityNode*>>& nearbyEntities);
+        std::list<CollissionData> getCollissions(std::set<std::pair<EntityNode*, EntityNode*>>& nearbyEntities);
 };
 
 #endif //ANTGAME_COLLISSIONFINDER_HPP

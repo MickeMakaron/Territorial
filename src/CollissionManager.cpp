@@ -34,7 +34,7 @@ void CollissionManager::update()
 {
     mQuadtree.update();
 
-    std::list<std::pair<EntityNode*, EntityNode*>> nearbyEntities = mQuadtree.getNearbyEntities();
+    std::set<std::pair<EntityNode*, EntityNode*>> nearbyEntities = mQuadtree.getNearbyEntities();
     mHandler.handleCollissions(mFinder.getCollissions(nearbyEntities));
 }
 
