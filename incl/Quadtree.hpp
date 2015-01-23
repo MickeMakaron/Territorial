@@ -28,6 +28,7 @@
 ////////////////////////////////////////////////
 // C++ Standard Library
 #include <list>
+#include <set>
 ////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
@@ -58,7 +59,7 @@ class Quadtree
         void    getQuadtree(std::list<const Quadtree*>& qtree) const;
         /////////////////////////////////////////////////////////
 
-        std::list<std::pair<EntityNode*, EntityNode*>> getNearbyEntities();
+        std::set<std::pair<EntityNode*, EntityNode*>> getNearbyEntities();
 
         sf::FloatRect getBoundingRect() const;
         void    removeWrecks();
@@ -72,6 +73,7 @@ class Quadtree
 
         void            insertNode(Node* node);
 
+        void            getBottomQuads(std::list<Quadtree*>& quads);
 
         void            eraseNode(std::list<Node>::iterator iNode);
         void            eraseQuadNode(Node* node);
@@ -91,7 +93,7 @@ class Quadtree
 
     private:
         unsigned int MAX_NODES = 5;
-        unsigned int MAX_LEVELS = 5;
+        unsigned int MAX_LEVELS = 10;
         unsigned int mLevel;
 
         std::vector<Quadtree>   mChildren;

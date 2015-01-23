@@ -133,10 +133,12 @@ void Quadtree::updateNodes(std::list<Node*>& updatedNodes)
                 if(!intersects(entityRect, (*iQuad)->getBoundingRect()) && !intersects((*iQuad)->getBoundingRect(), entityRect))
                     markedForErasion.push_back(*iQuad);
 
-                updatedNodes.push_back(&node);
+
 
                 iQuad++;
             }
+            updatedNodes.push_back(&node);
+
             for(Quadtree* quad : markedForErasion)
                 quad->eraseQuadNode(&node);
         }
@@ -296,48 +298,47 @@ unsigned char Quadtree::getPartialIndices(sf::FloatRect nodeBounds)
     return partialIndices;
 }
 
-std::list<std::pair<EntityNode*, EntityNode*>> Quadtree::getNearbyEntities()
+void Quadtree::getBottomQuads(std::list<Quadtree*>& quads)
 {
-    std::list<std::pair<EntityNode*, EntityNode*>> nearbyPairs;
-    for(Node& node : mNodes)
+    if(mChildren.empty())
+        quads.push_back(this);
+    else
+        for(Quadtree& child : mChildren)
+            child.getBottomQuads(quads);
+}
+
+std::set<std::pair<EntityNode*, EntityNode*>> Quadtree::getNearbyEntities()
+{
+    std::set<std::pair<EntityNode*, EntityNode*>> nearbyPairs;
+
+    std::list<Quadtree*> bottomQuads;
+    getBottomQuads(bottomQuads);
+
+    for(Quadtree* quad : bottomQuads)
     {
-        std::list<Node*> nearbyNodes;
-        for(Quadtree* quad : node.quads)
-        {
-            /*
-             * If the quad is a bottom quad, i.e. it has
-             * no children, insert all the nodes it contains
-             * into nearbyNodes.
-             */
-            if(!quad->hasChildren())
-            {
-                std::list<Node*> quadNodes = quad->getQuadNodes();
-                nearbyNodes.insert(nearbyNodes.end(), quadNodes.begin(), quadNodes.end());
-            }
-        }
+        std::list<Node*> nearbyNodes = quad->getQuadNodes();
 
-        // Remove duplicate entries.
-        nearbyNodes.unique();
-
-        for(Node* nearbyNode : nearbyNodes)
+        auto iNodeA = nearbyNodes.begin();
+        auto iNodeB = iNodeA;
+        while(iNodeA != nearbyNodes.end())
         {
-            // Push nearby pair into collission array if nearby node is NOT node.
-            if(nearbyNode != &node)
+            iNodeB++;
+            auto it = iNodeB;
+            while(it != nearbyNodes.end())
             {
                 // Order pair by pointer value.
-                if(node.entity < nearbyNode->entity)
-                    nearbyPairs.push_back(std::make_pair(node.entity, nearbyNode->entity));
+                if((*iNodeA)->entity < (*it)->entity)
+                    nearbyPairs.insert(std::make_pair((*iNodeA)->entity, (*it)->entity));
                 else
-                    nearbyPairs.push_back(std::make_pair(nearbyNode->entity, node.entity));
+                    nearbyPairs.insert(std::make_pair((*it)->entity, (*iNodeA)->entity));
+
+                it++;
             }
+
+            iNodeA++;
         }
     }
 
-    /*
-     * Remove duplicate entries. Since the pairs are ordered by pointer value
-     * we are guaranteed to catch duplicates.
-     */
-    nearbyPairs.unique([](std::pair<EntityNode*, EntityNode*>& a, std::pair<EntityNode*, EntityNode*>& b){return a.first == b.first;});
 
     // Move the list out of here to avoid copying large-sized lists.
     return std::move(nearbyPairs);
