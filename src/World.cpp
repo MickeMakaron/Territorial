@@ -100,9 +100,9 @@ void World::buildWorld()
     mEntitiesManager.insertEntity(std::move(antHill));
 
     pos.y += 50;
-    for(int y = 0; y < 10; y++)
+    for(int y = 0; y < 31; y++)
     {
-        for(int x = 0; x < 100; x++)
+        for(int x = 0; x < 31; x++)
         {
             std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
             antHill->setTexture(mTextures.get(1));
@@ -112,7 +112,7 @@ void World::buildWorld()
 
         }
 
-        pos.x -= 50 * 100;
+        pos.x -= 50 * 31;
         pos.y += 50;
     }
 

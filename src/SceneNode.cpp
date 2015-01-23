@@ -51,7 +51,6 @@ SceneNode::SceneNode(Category::Type category)
 , mParent(nullptr)
 , mDefaultCategory(category)
 {
-    std::cout << sizeof(SceneNode) << std::endl;
 }
 
 void SceneNode::attachChild(SceneNode::Ptr child)
