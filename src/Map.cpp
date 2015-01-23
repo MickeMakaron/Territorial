@@ -56,6 +56,4 @@ void Map::load(const std::string& filePath)
     mDrawShape.setSize(texSize);
     mDrawShape.setTexture(&mTexture);
     mDrawShape.setScale(mTileSize, mTileSize);
-
-    mDrawShape.setPosition(-texSize * mTileSize / 2.f);
 }
