@@ -25,6 +25,7 @@
 
 #include "Category.hpp"
 
+
 #include "SFML/System/Time.hpp"
 
 #include <functional>
