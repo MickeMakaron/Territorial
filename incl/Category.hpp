@@ -37,7 +37,7 @@ namespace Category
 		HostileEntity       = 1 << 4,
 		AlliedEntity        = 1 << 5,
 		NeutralEntity       = 1 << 6,
-		EntityMover         = 1 << 7,
+		Pathfinder         = 1 << 7,
 
         Entity = PlayerEntity | ComputerEntity | OtherPlayerEntity,
 	};
