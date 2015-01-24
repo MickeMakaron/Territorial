@@ -22,19 +22,19 @@
 
 
 #include "EntitiesManager.hpp"
-
-
 #include "CommandQueue.hpp"
+#include "Pathfinder.hpp"
+#include "Map.hpp"
 
 
-
-
-EntitiesManager::EntitiesManager(sf::FloatRect mapRect, CommandQueue& commandQueue)
+EntitiesManager::EntitiesManager(const Map& map, CommandQueue& commandQueue)
 : mCommandQueue(commandQueue)
-, mCollissionManager(mapRect)
+, mCollissionManager(map.getBounds())
+, mPathfinder(map)
 {
 
 }
+
 
 void EntitiesManager::insertEntity(std::unique_ptr<EntityNode> entity)
 {
@@ -42,9 +42,10 @@ void EntitiesManager::insertEntity(std::unique_ptr<EntityNode> entity)
     mEntitiesGraph.attachChild(std::move(entity));
 }
 
-void EntitiesManager::draw(sf::RenderTarget& target, sf::RenderStates states) const
+void EntitiesManager::draw(sf::RenderTarget& target) const
 {
     target.draw(mEntitiesGraph);
+    mPathfinder.draw(target);
 
     // Quadtree debugging
     sf::RectangleShape shape;
@@ -63,6 +64,11 @@ void EntitiesManager::draw(sf::RenderTarget& target, sf::RenderStates states) co
 
         target.draw(shape);
     }
+}
+
+std::list<Pathfinder::Waypoint> EntitiesManager::getPath(sf::Vector2f a, sf::Vector2f b)
+{
+    return mPathfinder.getPath(a, b);
 }
 
 void EntitiesManager::removeWrecks()

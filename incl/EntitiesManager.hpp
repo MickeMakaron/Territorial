@@ -38,27 +38,30 @@
 #include "EntityNode.hpp"
 #include "CollissionManager.hpp"
 
-class CommandQueue;
 
-class EntitiesManager : public sf::Drawable
+class CommandQueue;
+class Map;
+
+class EntitiesManager
 {
     public:
-        EntitiesManager(sf::FloatRect mapRect, CommandQueue& commandQueue);
+        EntitiesManager(const Map& map, CommandQueue& commandQueue);
 
         void update();
         void handleEvent(const sf::Event& event);
-        virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+        void draw(sf::RenderTarget& target) const;
 
         void removeWrecks();
 
         void insertEntity(std::unique_ptr<EntityNode> entity);
 
-
+        std::list<Pathfinder::Waypoint> getPath(sf::Vector2f a, sf::Vector2f b);
 
     private:
         CommandQueue&       mCommandQueue;
         SceneNode           mEntitiesGraph;
         CollissionManager   mCollissionManager;
+        Pathfinder          mPathfinder;
 };
 
 #endif // ANTGAME_ENTITIESMANAGER_HPP

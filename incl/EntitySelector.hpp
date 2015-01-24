@@ -25,7 +25,7 @@
 
 
 #include "Command.hpp"
-#include "EntityMover.hpp"
+#include "Pathfinder.hpp"
 
 class CommandQueue;
 class EntityNode;
