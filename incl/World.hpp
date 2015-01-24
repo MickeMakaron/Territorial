@@ -66,14 +66,12 @@ class World
         void moveView();
 
     private:
-        Map           mMap;
-        sf::Sprite mBackground;
-
-        std::vector<Team>   mTeams;
-
-
         sf::RenderWindow& mWindow;
         sf::RenderTarget& mTarget;
+
+        Map           mMap;
+        std::vector<Team>   mTeams;
+
         CursorNode mCursorNode;
         Camera mCamera;
         CommandQueue mCommandQueue;
