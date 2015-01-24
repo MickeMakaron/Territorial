@@ -32,9 +32,9 @@
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
-#include <SFML/Graphics/Sprite.hpp>
-#include <SFML/Graphics/Text.hpp>
-#include <SFML/Graphics/Shape.hpp>
+#include "SFML/Graphics/Sprite.hpp"
+#include "SFML/Graphics/Text.hpp"
+#include "SFML/Graphics/Shape.hpp"
 ////////////////////////////////////////////////
 
 namespace
@@ -266,6 +266,112 @@ bool intersects(sf::Vector2f p, sf::FloatRect rect)
     else
         return true;
 }
+
+bool intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f b2)
+{
+    //////////////////////////
+    // l - left hand line,  //
+    // r - right hand line, //
+    // 1 - first in pair,   //
+    // 2 - second in pair,  //
+    // X - X-value,         //
+    // Y - Y-value,         //
+    //////////////////////////
+    float   l1X = a1.x,
+            l1Y = a1.y,
+
+            l2X = a2.x,
+            l2Y = a2.y,
+
+            r1X = b1.x,
+            r1Y = b1.y,
+
+            r2X = b2.x,
+            r2Y = b2.y;
+
+    // Check if intersection is possible at all
+    if (std::min(l1X, l2X) > std::max(r1X, r2X))
+        return false;
+    if (std::max(l1X, l2X) < std::min(r1X,r2X))
+        return false;
+    if (std::min(l1Y, l2Y) > std::max(r1Y,r2Y))
+        return false;
+    if (std::max(l1Y, l2Y) < std::min(r1Y,r2Y))
+        return false;
+
+
+
+    float d = (r2Y - r1Y)*(l2X - l1X) - (r2X - r1X)*(l2Y - l1Y);
+    if(std::fabs(d) < 0.00001)
+        return false;
+
+    float nL = ((r2X - r1X)*(l1Y - r1Y) - (r2Y - r1Y)*(l1X - r1X))/d;
+    if(nL < 0 || nL > 1.f)
+        return false;
+
+    float nR = ((l2X - l1X)*(l1Y - r1Y) - (l2Y - l1Y)*(l1X - r1X))/d;
+    if(nR < 0 || nR > 1.f)
+        return false;
+/*
+    if(intersectionPoint)
+        *intersectionPoint = sf::Vector2f(l1X + nL*(l2X - l1X),
+                                         l1Y + nL*(l2Y - l1Y));
+*/
+    return true;
+
+/*
+    sf::Vector2f d = a1 - a2;
+
+    // Get arbitrary point to the left to check with.
+    sf::Vector2f lPoint = a1 + sf::Vector2f(d.y, -d.x);
+
+    // Get arbitrary point to the right to check with.
+    sf::Vector2f rPoint = a1 + sf::Vector2f(-d.y, d.x);
+
+    bool b1IsRight, b2IsRight;
+
+    b1IsRight = lengthSqrd(b1 - rPoint) < lengthSqrd(b1 - lPoint) ? true : false;
+    b2IsRight = lengthSqrd(b2 - rPoint) < lengthSqrd(b2 - lPoint) ? true : false;
+
+    if((b1IsRight && !b2IsRight) || (!b1IsRight && b2IsRight))
+    {
+        int flerp = 0;
+    }
+
+    return (b1IsRight && !b2IsRight) || (!b1IsRight && b2IsRight);
+*/
+
+}
+
+
+/**
+ * a - b
+ *     |
+ *     c
+ */
+bool isAngleConvex(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c)
+{
+     /*
+     * What this does is simply check which side of the line a->b the next point c is.
+     * Since shapes are defined in a clockwise order, it must be on the right side.
+     * It works by establishing two points that are guaranteed to the left and right
+     * of the line. Which of these two points c is closest to determines which side of
+     * the line c is on. If c is closer to the right pointer, it is on the right side
+     * and vice versa.
+     */
+    sf::Vector2f d = b - a;
+
+    // Get arbitrary point to the left to check with.
+    sf::Vector2f lPoint = b + sf::Vector2f(d.y, -d.x);
+
+    // Get arbitrary point to the right to check with.
+    sf::Vector2f rPoint = b + sf::Vector2f(-d.y, d.x);
+
+    return lengthSqrd(c - rPoint) < lengthSqrd(c - lPoint);
+}
+
+
+
 
 const float PX_PER_M = 20.f;
 const float M_PER_PX = 1/20.f;

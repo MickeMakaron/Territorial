@@ -23,9 +23,13 @@
 #ifndef GAME_UTILITY_HPP
 #define GAME_UTILITY_HPP
 
-#include <SFML/Window/Keyboard.hpp>
-#include <SFML/System/Vector2.hpp>
-#include <SFML/Graphics/Rect.hpp>
+////////////////////////////////////////////////
+// SFML - Simple and Fast Media Library
+#include "SFML/Window/Keyboard.hpp"
+#include "SFML/System/Vector2.hpp"
+#include "SFML/Graphics/Rect.hpp"
+////////////////////////////////////////////////
+
 
 #include <sstream>
 
@@ -36,9 +40,6 @@ namespace sf
 	class Text;
 	class Shape;
 }
-
-class Animation;
-class Polygon;
 
 // Since std::to_string doesn't work on MinGW we have to implement
 // our own to support all platforms.
@@ -82,6 +83,9 @@ float           dot(sf::Vector2f a, sf::Vector2f b);
 bool    contains(sf::FloatRect lhs, sf::FloatRect rhs);
 bool    intersects(sf::FloatRect lhs, sf::FloatRect rhs);
 bool    intersects(sf::Vector2f p, sf::FloatRect rect);
+bool    intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f b2);
+
+bool    isAngleConvex(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c);
 
 #include <Utility.inl>
 #endif // GAME_UTILITY_HPP
