@@ -26,11 +26,11 @@
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
 #include "SFML/Graphics/Drawable.hpp"
-#include "SFML/Graphics/VertexArray.hpp"
 #include "SFML/Graphics/Texture.hpp"
-#include "SFML/Graphics/View.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
 ////////////////////////////////////////////////
+
+#include "TerrainCollissionNode.hpp"
 
 class Map : public sf::Drawable
 {
@@ -42,12 +42,13 @@ class Map : public sf::Drawable
 
         virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
+        std::list<const TerrainCollissionNode*> getImpassableTerrain() const;
 
     private:
-        float               mTileSize;
-
         sf::Texture         mTexture;
         sf::RectangleShape  mDrawShape;
+
+        TerrainCollissionNode mTCN;
 
 };
 

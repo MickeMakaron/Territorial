@@ -24,14 +24,15 @@
 #define ANTGAME_ENTITYSTATE_HPP
 
 class EntityNode;
-#include "EntityMover.hpp"
+class EntitiesManager;
+#include "Pathfinder.hpp"
 
 #include "SFML/Graphics/RenderTarget.hpp"
 
 class EntityState
 {
     public:
-        EntityState(EntityNode& entity);
+        EntityState(EntityNode& entity, EntitiesManager& entitiesManger);
 
         virtual void update();
         virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
@@ -41,14 +42,15 @@ class EntityState
         virtual bool isMoving() const;
 
     protected:
-        EntityNode& mEntity;
+        EntityNode&         mEntity;
+        EntitiesManager&    mEntitiesManager;
 };
 
 
 class EntityStateMove : public EntityState
 {
     public:
-        EntityStateMove(EntityNode& entity, sf::Vector2f target);
+        EntityStateMove(EntityNode& entity, EntitiesManager& entitiesManger, sf::Vector2f target);
 
         virtual void update();
         virtual bool isDone() const;
@@ -58,16 +60,15 @@ class EntityStateMove : public EntityState
         void setTarget(sf::Vector2f target);
 
     private:
-        std::list<EntityMover::Waypoint>    mWaypoints;
-        EntityMover                         mEntityMover;
-        sf::Vector2f                        mTarget;
+        std::list<Pathfinder::Waypoint>    mWaypoints;
+        sf::Vector2f                       mTarget;
 };
 
 
 class EntityStateAttack : public EntityStateMove
 {
     public:
-        EntityStateAttack(EntityNode& entity, EntityNode* target);
+        EntityStateAttack(EntityNode& entity, EntitiesManager& entitiesManger, EntityNode* target);
 
         virtual void update();
         virtual bool isDone() const;

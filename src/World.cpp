@@ -31,16 +31,13 @@
 #include "Team.hpp"
 #include "TIME_PER_FRAME.hpp"
 
-
-#include "CollissionFinder.hpp"
-
 World::World(sf::RenderWindow& window)
 : mWindow(window)
 , mTarget(window)
+, mMap("assets/maps/1.png")
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
-, mMap("assets/maps/1.png")
-, mEntitiesManager(mMap.getBounds(), mCommandQueue)
+, mEntitiesManager(mMap, mCommandQueue)
 {
     buildWorld();
 }
@@ -48,8 +45,9 @@ World::World(sf::RenderWindow& window)
 void World::update()
 {
     mCamera.update();
-    mCursorNode.update(mCommandQueue);
     mEntitiesManager.update();
+    mCursorNode.update(mCommandQueue);
+
 
     mCursorNode.removeWrecks();
     mEntitiesManager.removeWrecks();
@@ -67,21 +65,13 @@ void World::draw()
 {
     //mTarget.draw(mBackground);
     mTarget.draw(mMap);
-    mTarget.draw(mEntitiesManager);
+    mEntitiesManager.draw(mTarget);
     mTarget.draw(mCursorNode);
 
 }
 
 void World::buildWorld()
-{/*
-    sf::Texture bgTexture;
-    bgTexture.loadFromFile("assets/textures/grass.png");
-    bgTexture.setRepeated(true);
-    mTextures.load(0, bgTexture);
-
-    mBackground.setTexture(mTextures.get(0));
-    mBackground.setTextureRect(sf::IntRect(0, 0, 500, 500));
-*/
+{
     mTextures.load(1, "assets/textures/anthill_large.png");
     sf::Vector2f pos(200, 200);
 
@@ -95,16 +85,16 @@ void World::buildWorld()
     mTeams[0].addHostile(team2.getId());
 
 
-    std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], Category::PlayerEntity));
+    std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[0], mEntitiesManager, Category::PlayerEntity));
     antHill->setTexture(mTextures.get(1));
     mEntitiesManager.insertEntity(std::move(antHill));
 
     pos.y += 50;
-    for(int y = 0; y < 31; y++)
+    for(int y = 0; y < 3; y++)
     {
-        for(int x = 0; x < 31; x++)
+        for(int x = 0; x < 3; x++)
         {
-            std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], Category::PlayerEntity));
+            std::unique_ptr<EntityNode> antHill(new EntityNode(100, pos, mTeams[1], mEntitiesManager, Category::PlayerEntity));
             antHill->setTexture(mTextures.get(1));
             mEntitiesManager.insertEntity(std::move(antHill));
 
@@ -112,7 +102,7 @@ void World::buildWorld()
 
         }
 
-        pos.x -= 50 * 31;
+        pos.x -= 50 * 3;
         pos.y += 50;
     }
 

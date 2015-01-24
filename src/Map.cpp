@@ -32,15 +32,33 @@
 
 
 Map::Map(const std::string& filePath)
-: mTileSize(8.f)
 {
     load(filePath);
+
+    std::vector<sf::Vector2f> points =
+    {
+        sf::Vector2f(100, 100),
+        sf::Vector2f(200, 150),
+        sf::Vector2f(300, 100),
+        sf::Vector2f(250, 200),
+        sf::Vector2f(150, 150),
+        sf::Vector2f(100, 100),
+    };
+
+    mTCN.setPoints(points);
 }
 
+
+std::list<const TerrainCollissionNode*> Map::getImpassableTerrain() const
+{
+    return std::list<const TerrainCollissionNode*>({&mTCN});
+}
 
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
     target.draw(mDrawShape);
+    target.draw(mTCN);
+    mTCN.drawBoundingRect(target, states);
 }
 
 sf::FloatRect Map::getBounds() const
@@ -55,5 +73,8 @@ void Map::load(const std::string& filePath)
 
     mDrawShape.setSize(texSize);
     mDrawShape.setTexture(&mTexture);
-    mDrawShape.setScale(mTileSize, mTileSize);
+    mDrawShape.setScale(8.f, 8.f);
+
+    mDrawShape.move(-500, -500);
 }
+

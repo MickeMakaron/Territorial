@@ -31,11 +31,11 @@
 
 
 #include "SceneNode.hpp"
-#include "EntityMover.hpp"
 #include "StateQueue.hpp"
 
 class CommandQueue;
 class Team;
+class EntitiesManager;
 
 class EntityNode : public SceneNode
 {
@@ -60,7 +60,7 @@ class EntityNode : public SceneNode
     public:
 
 
-        EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category = Category::Entity);
+        EntityNode(int hp, sf::Vector2f position, Team& team, EntitiesManager& entitiesManager, Category::Type category = Category::Entity);
 
         void            damage(int points);
         void            destroy();
@@ -101,6 +101,7 @@ class EntityNode : public SceneNode
         unsigned int    mHealCategory;
         Team&           mTeam;
 
+        EntitiesManager& mEntitiesManager;
         StateQueue      mStateQueue;
 };
 

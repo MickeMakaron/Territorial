@@ -23,8 +23,10 @@
 #include "EntityNode.hpp"
 #include "Team.hpp"
 
-
+////////////////////////////////////////////////
+// STD - C++ Standard Library
 #include <cassert>
+////////////////////////////////////////////////
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
@@ -32,7 +34,7 @@
 ////////////////////////////////////////////////
 
 #include "CommandQueue.hpp"
-#include "EntityMover.hpp"
+#include "EntitiesManager.hpp"
 
 EntityNode::Attributes::Attributes(int baseHp, float baseMovementSpeed, int baseAttackDamage, float baseAttackRange)
 : baseHp(baseHp)
@@ -47,14 +49,15 @@ EntityNode::Attributes::Attributes(int baseHp, float baseMovementSpeed, int base
 
 }
 
-EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, Category::Type category)
+EntityNode::EntityNode(int hp, sf::Vector2f position, Team& team, EntitiesManager& entitiesManager, Category::Type category)
 : SceneNode(category)
 , mAttributes(hp, 100, 10, 40)
 , mHarvestCategory(0)
 , mAttackCategory(Category::Entity)
 , mHealCategory(0)
 , mTeam(team)
-, mStateQueue(StateQueue::StatePtr(new EntityState(*this)))
+, mEntitiesManager(entitiesManager)
+, mStateQueue(StateQueue::StatePtr(new EntityState(*this, mEntitiesManager)))
 {
     setPosition(position);
     updateOrigin();
@@ -116,9 +119,9 @@ void EntityNode::interact(EntityNode* target, bool isAppending)
 void EntityNode::goTo(sf::Vector2f target, bool isAppending)
 {
     if(isAppending)
-        mStateQueue.pushState(std::move(StateQueue::StatePtr(new EntityStateMove(*this, target))));
+        mStateQueue.pushState(std::move(StateQueue::StatePtr(new EntityStateMove(*this, mEntitiesManager, target))));
     else
-        mStateQueue.setState(std::move(StateQueue::StatePtr(new EntityStateMove(*this, target))));
+        mStateQueue.setState(std::move(StateQueue::StatePtr(new EntityStateMove(*this, mEntitiesManager, target))));
 }
 
 void EntityNode::heal(EntityNode* target, bool isAppending)
@@ -130,9 +133,9 @@ void EntityNode::heal(EntityNode* target, bool isAppending)
 void EntityNode::attack(EntityNode* target, bool isAppending)
 {
     if(isAppending)
-        mStateQueue.pushState(std::move(StateQueue::StatePtr(new EntityStateAttack(*this, target))));
+        mStateQueue.pushState(std::move(StateQueue::StatePtr(new EntityStateAttack(*this, mEntitiesManager, target))));
     else
-        mStateQueue.setState(std::move(StateQueue::StatePtr(new EntityStateAttack(*this, target))));
+        mStateQueue.setState(std::move(StateQueue::StatePtr(new EntityStateAttack(*this, mEntitiesManager, target))));
 }
 
 void EntityNode::harvest(EntityNode* target, bool isAppending)

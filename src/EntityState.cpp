@@ -24,9 +24,11 @@
 #include "EntityState.hpp"
 #include "EntityNode.hpp"
 #include "TIME_PER_FRAME.hpp"
+#include "EntitiesManager.hpp"
 
-EntityState::EntityState(EntityNode& entity)
+EntityState::EntityState(EntityNode& entity, EntitiesManager& entitiesManager)
 : mEntity(entity)
+, mEntitiesManager(entitiesManager)
 {
     // Do nothing more by default.
 }
@@ -58,16 +60,15 @@ bool EntityState::isMoving() const
 }
 
 
-EntityStateMove::EntityStateMove(EntityNode& entity, sf::Vector2f target)
-: EntityState(entity)
+EntityStateMove::EntityStateMove(EntityNode& entity, EntitiesManager& entitiesManager, sf::Vector2f target)
+: EntityState(entity, entitiesManager)
 , mTarget(target)
 {
-
 }
 
 void EntityStateMove::initialize()
 {
-    mWaypoints = mEntityMover.getPath(mEntity.getPosition(), mTarget);
+    mWaypoints = mEntitiesManager.getPath(mEntity.getPosition(), mTarget);
 }
 
 bool EntityStateMove::isDone() const
@@ -91,7 +92,7 @@ void EntityStateMove::update()
     if(mWaypoints.empty())
         return;
 
-    EntityMover::Waypoint& wp = mWaypoints.front();
+    Pathfinder::Waypoint& wp = mWaypoints.front();
 
     float step = mEntity.getAttributes().movementSpeed * TIME_PER_FRAME::S;
     while(wp.distance < step)
@@ -111,8 +112,8 @@ void EntityStateMove::update()
     wp.distance -= step;
 }
 
-EntityStateAttack::EntityStateAttack(EntityNode& entity, EntityNode* target)
-: EntityStateMove(entity, target->getPosition())
+EntityStateAttack::EntityStateAttack(EntityNode& entity, EntitiesManager& entitiesManger, EntityNode* target)
+: EntityStateMove(entity, entitiesManger, target->getPosition())
 , mTarget(target)
 {
 }

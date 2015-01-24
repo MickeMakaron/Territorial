@@ -33,8 +33,8 @@
 
 ////////////////////////////////////////////////
 // SFML - Simple and Fast Media Library
-#include <SFML/System/NonCopyable.hpp>
-#include <SFML/Graphics.hpp>
+#include "SFML/System/NonCopyable.hpp"
+#include "SFML/Graphics.hpp"
 ////////////////////////////////////////////////
 
 
