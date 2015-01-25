@@ -49,12 +49,23 @@ Map::Map(const std::string& filePath)
 
     mImpassableNodes.push_back(std::move(node));
 
+    for(unsigned int x = 0; x < 10; x++)
+    {
+        for(unsigned int y = 0; y < 10; y++)
+        {
+            for(auto& p : points)
+                p += sf::Vector2f(300, 0);
 
-    for(auto& p : points)
-        p += sf::Vector2f(200, 200);
+            node = NodePtr(new TerrainCollissionNode(points));
+            mImpassableNodes.push_back(std::move(node));
+        }
 
-    node = NodePtr(new TerrainCollissionNode(points));
-    mImpassableNodes.push_back(std::move(node));
+        for(auto& p : points)
+            p += sf::Vector2f(-300 * 10, 200);
+    }
+
+
+
 
     for(auto& pNode : mImpassableNodes)
         pNode->computeVisiblePoints(mImpassableNodes);

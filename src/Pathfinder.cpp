@@ -66,6 +66,16 @@ bool Pathfinder::lineIntersectsRect(sf::Vector2f p1, sf::Vector2f p2, sf::FloatR
     sf::Vector2f halfRectSize(rect.width / 2, rect.height / 2);
     sf::Vector2f rectCenter(rect.left + halfRectSize.x, rect.top + halfRectSize.y);
 
+    if(     intersects(p1, p2, sf::Vector2f(rect.left, rect.top), sf::Vector2f(rectRight, rect.top))
+        ||  intersects(p1, p2, sf::Vector2f(rectRight, rect.top), sf::Vector2f(rectRight, rectBot))
+        ||  intersects(p1, p2, sf::Vector2f(rectRight, rectBot), sf::Vector2f(rect.left, rectBot))
+        ||  intersects(p1, p2, sf::Vector2f(rect.left, rectBot), sf::Vector2f(rect.left, rect.top))
+       )
+       return true;
+    else
+        return false;
+
+
     float rectRadiusSqrd = (halfRectSize.x + halfRectSize.y) * (halfRectSize.x + halfRectSize.y);
     sf::Vector2f dVec = p1 - rectCenter;
     float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
@@ -139,10 +149,34 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector
     auto point = start;
     std::vector<const TerrainCollissionNode::Path*> paths;
     std::vector<const TerrainCollissionNode::Point*> visitedPoints = {start};
+    auto comparator = [goal](const TerrainCollissionNode::Path* a, const TerrainCollissionNode::Path* b)
+    {
+        return lengthSqrd(a->p->pos - goal->pos) < lengthSqrd(b->p->pos - goal->pos);
+    };
     while(point != goal)
     {
+        auto possiblePaths = point->paths;
+
+        auto it = possiblePaths.begin();
+        while(it != possiblePaths.end())
+        {
+            if(std::find(visitedPoints.begin(), visitedPoints.end(), (*it)->p) == visitedPoints.end())
+                it++;
+            else
+                possiblePaths.erase(it++);
+        }
+
+        assert(possiblePaths.size() > 0);
+
+        auto iClosestPath = std::min_element(possiblePaths.begin(), possiblePaths.end(), comparator);
+        paths.push_back(*iClosestPath);
+        point = paths.back()->p;
+
+        /*
         for(const TerrainCollissionNode::Path* possiblePath : point->paths)
         {
+
+
             if(std::find(visitedPoints.begin(), visitedPoints.end(), possiblePath->p) == visitedPoints.end())
             {
                 paths.push_back(possiblePath);
@@ -155,7 +189,7 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector
                 // Impossible atm.
                 assert(true);
             }
-        }
+        }*/
     }
 
     Waypoint wp;
