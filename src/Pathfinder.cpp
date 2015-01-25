@@ -22,7 +22,6 @@
 
 
 #include "Pathfinder.hpp"
-#include "Map.hpp"
 #include "Utility.hpp"
 
 ////////////////////////////////////////////////
@@ -34,6 +33,7 @@
 ////////////////////////////////////////////////
 // STD - C++ Standard Library
 #include <cmath>
+#include <cassert>
 ////////////////////////////////////////////////
 
 Pathfinder::Pathfinder(const Map& map)
@@ -44,7 +44,6 @@ Pathfinder::Pathfinder(const Map& map)
 
 void Pathfinder::draw(sf::RenderTarget& target) const
 {
-    target.draw(mDebug);
 }
 
 bool Pathfinder::lineIntersectsRect(sf::Vector2f p1, sf::Vector2f p2, sf::FloatRect rect) const
@@ -83,6 +82,113 @@ bool Pathfinder::lineIntersectsRect(sf::Vector2f p1, sf::Vector2f p2, sf::FloatR
 
 std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector2f destination)
 {
+    std::list<Waypoint> wayPoints;
+
+    std::list<const TerrainCollissionNode*> intersectingNodes;
+    for(const Map::NodePtr& pNode : mImpassableTerrain)
+        if(lineIntersectsRect(pos, destination, pNode->getBoundingRect()) && pNode->isLineIntersecting(pos, destination))
+            intersectingNodes.push_back(pNode.get());
+
+
+    if(intersectingNodes.empty())
+    {
+        Waypoint wp;
+        wp.destination = destination;
+
+        sf::Vector2f dVec = destination - pos;
+        float d = sqrt(dVec.x * dVec.x + dVec.y * dVec.y);
+
+        wp.distance = d;
+        wp.direction = dVec / d;
+
+        return {wp};
+    }
+
+
+    typedef const TerrainCollissionNode::Point* PointPtr;
+
+    float minSqrd = 99999999999999;
+    float dSqrd;
+    PointPtr start = nullptr;
+    for(const TerrainCollissionNode* pNode : intersectingNodes)
+    {
+        PointPtr p = pNode->getClosestPoint(pos, &dSqrd);
+
+        if(dSqrd < minSqrd)
+        {
+            minSqrd = dSqrd;
+            start = p;
+        }
+    }
+
+    minSqrd = 999999999999999999;
+    PointPtr goal = nullptr;
+    for(const TerrainCollissionNode* pNode : intersectingNodes)
+    {
+        PointPtr p = pNode->getClosestPoint(destination, &dSqrd);
+
+        if(dSqrd < minSqrd)
+        {
+            minSqrd = dSqrd;
+            goal = p;
+        }
+    }
+
+    assert(start && goal);
+
+    auto point = start;
+    std::vector<const TerrainCollissionNode::Path*> paths;
+    std::vector<const TerrainCollissionNode::Point*> visitedPoints = {start};
+    while(point != goal)
+    {
+        for(const TerrainCollissionNode::Path* possiblePath : point->paths)
+        {
+            if(std::find(visitedPoints.begin(), visitedPoints.end(), possiblePath->p) == visitedPoints.end())
+            {
+                paths.push_back(possiblePath);
+                point = possiblePath->p;
+                visitedPoints.push_back(point);
+                break;
+            }
+            else
+            {
+                // Impossible atm.
+                assert(true);
+            }
+        }
+    }
+
+    Waypoint wp;
+    wp.destination = start->pos;
+    sf::Vector2f dVec = start->pos - pos;
+    wp.distance = sqrtf(lengthSqrd(dVec));
+    wp.direction = dVec / wp.distance;
+
+    wayPoints.push_back(wp);
+
+    sf::Vector2f prev = start->pos;
+    for(auto path : paths)
+    {
+        wp.destination = path->p->pos;
+        wp.distance = sqrtf(path->lengthSqrd);
+        wp.direction = (path->p->pos - prev) / wp.distance;
+
+        prev = path->p->pos;
+        wayPoints.push_back(wp);
+    }
+
+
+    wp.destination = destination;
+    dVec = destination - goal->pos;
+    wp.distance = sqrtf(lengthSqrd(dVec));
+    wp.direction = dVec / wp.distance;
+
+    wayPoints.push_back(wp);
+
+    return wayPoints;
+
+    /*
+
     std::list<Waypoint> wayPoints;
     std::vector<sf::Vector2f> points;
 
@@ -157,4 +263,6 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector
     }
 
     return wayPoints;
+
+    */
 }

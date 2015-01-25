@@ -34,8 +34,8 @@
 ////////////////////////////////////////////////
 
 #include "TerrainCollissionNode.hpp"
+#include "Map.hpp"
 
-class Map;
 namespace sf
 {
     class RenderTarget;
@@ -60,8 +60,7 @@ class Pathfinder
         bool lineIntersectsRect(sf::Vector2f p1, sf::Vector2f p2, sf::FloatRect rect) const;
 
     private:
-        std::list<const TerrainCollissionNode*> mImpassableTerrain;
-        TerrainCollissionNode mDebug;
+        const std::list<Map::NodePtr>& mImpassableTerrain;
 };
 
 #endif // ANTGAME_PATHFINDER_HPP
