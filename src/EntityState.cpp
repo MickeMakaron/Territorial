@@ -92,24 +92,24 @@ void EntityStateMove::update()
     if(mWaypoints.empty())
         return;
 
-    Pathfinder::Waypoint& wp = mWaypoints.front();
+    Pathfinder::Waypoint* wp = &mWaypoints.front();
 
     float step = mEntity.getAttributes().movementSpeed * TIME_PER_FRAME::S;
-    while(wp.distance < step)
+    while(wp->distance < step)
     {
-        mEntity.setPosition(wp.destination);
+        mEntity.setPosition(wp->destination);
 
-        step -= wp.distance;
+        step -= wp->distance;
         mWaypoints.pop_front();
 
         if(mWaypoints.empty())
             return;
         else
-            wp = mWaypoints.front();
+            wp = &mWaypoints.front();
     }
 
-    mEntity.move(wp.direction * step);
-    wp.distance -= step;
+    mEntity.move(wp->direction * step);
+    wp->distance -= step;
 }
 
 EntityStateAttack::EntityStateAttack(EntityNode& entity, EntitiesManager& entitiesManger, EntityNode* target)
