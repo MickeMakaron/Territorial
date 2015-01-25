@@ -35,6 +35,8 @@
 class Map : public sf::Drawable
 {
     public:
+        typedef std::unique_ptr<TerrainCollissionNode> NodePtr;
+
         Map(const std::string& filePath);
 
         void load(const std::string& filePath);
@@ -42,13 +44,13 @@ class Map : public sf::Drawable
 
         virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
-        std::list<const TerrainCollissionNode*> getImpassableTerrain() const;
+        const std::list<NodePtr>& getImpassableTerrain() const;
 
     private:
         sf::Texture         mTexture;
         sf::RectangleShape  mDrawShape;
 
-        TerrainCollissionNode mTCN;
+        std::list<NodePtr> mImpassableNodes;
 
 };
 

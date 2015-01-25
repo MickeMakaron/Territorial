@@ -45,21 +45,39 @@ Map::Map(const std::string& filePath)
         sf::Vector2f(100, 100),
     };
 
-    mTCN.setPoints(points);
+    NodePtr node(new TerrainCollissionNode(points));
+
+    mImpassableNodes.push_back(std::move(node));
+
+
+    for(auto& p : points)
+        p += sf::Vector2f(200, 200);
+
+    node = NodePtr(new TerrainCollissionNode(points));
+    mImpassableNodes.push_back(std::move(node));
+
+    for(auto& pNode : mImpassableNodes)
+        pNode->computeVisiblePoints(mImpassableNodes);
 }
 
 
-std::list<const TerrainCollissionNode*> Map::getImpassableTerrain() const
+const std::list<Map::NodePtr>& Map::getImpassableTerrain() const
 {
-    return std::list<const TerrainCollissionNode*>({&mTCN});
+    return mImpassableNodes;
 }
 
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
     target.draw(mDrawShape);
-    target.draw(mTCN);
-    mTCN.drawBoundingRect(target, states);
+
+    for(const NodePtr& pNode : mImpassableNodes)
+    {
+        target.draw(*pNode.get());
+        pNode->drawBoundingRect(target, states);
+    }
 }
+
+
 
 sf::FloatRect Map::getBounds() const
 {

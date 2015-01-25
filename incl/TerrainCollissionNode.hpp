@@ -31,20 +31,45 @@
 class TerrainCollissionNode : public SceneNode
 {
     public:
+        struct Point;
+        struct Path;
+
+        struct Point
+        {
+            sf::Vector2f        pos;
+            float               passWidth;
+            std::list<Path*>    paths;
+        };
+
+        struct Path
+        {
+            Path(const Point* from, const Point* to, float passWidth = 200);
+            float   passWidth;
+            const Point*  p; ///< Destination point
+            float   lengthSqrd;
+        };
+
         TerrainCollissionNode(const std::vector<sf::Vector2f>& points);
         TerrainCollissionNode();
-
+        const Point* getClosestPoint(sf::Vector2f p, float* minSqrd = nullptr) const;
         virtual sf::FloatRect   getBoundingRect() const;
         void    setPoints(const std::vector<sf::Vector2f>& points);
 
-        const std::vector<sf::Vector2f>& getConvexAngles() const;
+        const std::list<Point>& getConvexAngles() const;
         bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b) const;
-
-
-sf::Vector2f getPoint(unsigned int index) const;
-
+        void computeVisiblePoints(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
+        void computeVisiblePoints();
+        bool convexAngleContains(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c, sf::Vector2f p) const;
+        std::pair<double, double> getMinMaxAngles(sf::Vector2f pos);
     private:
-        void                    computeConvexAngles();
+
+        bool addSectorIfVisible(std::vector<std::pair<double, double>>& sectors, const std::pair<double, double>& sector);
+        void mergeSectors(std::vector<std::pair<double, double>>& sectors);
+
+        std::vector<sf::Vector2f> computeConvexAngles();
+        void initializeConvexPoints(std::vector<sf::Vector2f> convexAngles);
+
+        bool lineIntersects(sf::Vector2f p1, sf::Vector2f p2, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const;
 
         virtual void            drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
         virtual void            updateCurrent(CommandQueue&);
@@ -52,7 +77,10 @@ sf::Vector2f getPoint(unsigned int index) const;
     private:
         PolygonShape mShape;
         std::vector<sf::Vector2f> mPoints;
-        std::vector<sf::Vector2f> mConvexAngles;
+        std::list<Point>        mConvexPoints;
+        std::list<Path>         mPaths;
+
+
 };
 
 #endif // ANTGAME_TERRAINCOLLISSIONNODE_HPP
