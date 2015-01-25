@@ -33,6 +33,7 @@
 
 #include <sstream>
 
+#define PI 3.14159f
 
 namespace sf
 {
