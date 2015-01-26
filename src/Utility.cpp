@@ -199,7 +199,7 @@ int randomInt(int exclusiveMax)
 
 float length(sf::Vector2f vector)
 {
-	return std::sqrt(vector.x * vector.x + vector.y * vector.y);
+	return sqrtf(vector.x * vector.x + vector.y * vector.y);
 }
 
 sf::Vector2f unitVector(sf::Vector2f vector)
@@ -267,7 +267,7 @@ bool intersects(sf::Vector2f p, sf::FloatRect rect)
         return true;
 }
 
-bool intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f b2)
+bool intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f b2, sf::Vector2f* intersection)
 {
     //////////////////////////
     // l - left hand line,  //
@@ -312,11 +312,11 @@ bool intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f 
     float nR = ((l2X - l1X)*(l1Y - r1Y) - (l2Y - l1Y)*(l1X - r1X))/d;
     if(nR < 0 || nR > 1.f)
         return false;
-/*
-    if(intersectionPoint)
-        *intersectionPoint = sf::Vector2f(l1X + nL*(l2X - l1X),
+
+    if(intersection)
+        *intersection = sf::Vector2f(l1X + nL*(l2X - l1X),
                                          l1Y + nL*(l2Y - l1Y));
-*/
+
     return true;
 
 /*

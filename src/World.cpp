@@ -34,7 +34,7 @@
 World::World(sf::RenderWindow& window)
 : mWindow(window)
 , mTarget(window)
-, mMap("assets/maps/1.png")
+, mMap("assets/maps/2.png", sf::Vector2f(600, 500))
 , mCursorNode(mWindow, mTarget)
 , mCamera(mWindow, mTarget)
 , mEntitiesManager(mMap, mCommandQueue)
