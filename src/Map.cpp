@@ -35,6 +35,20 @@ Map::Map(const std::string& filePath)
 {
     load(filePath);
 
+    buildMap();
+}
+
+Map::Map(const std::string& filePath, sf::Vector2f size)
+{
+    load(filePath);
+    mDrawShape.setSize(size);
+
+    buildMap();
+}
+
+
+void Map::buildMap()
+{
     std::vector<sf::Vector2f> points =
     {
         sf::Vector2f(100, 100),
@@ -65,12 +79,48 @@ Map::Map(const std::string& filePath)
     }
 
 
+    for(auto i = mImpassableNodes.begin(); i != mImpassableNodes.end(); i++)
+    {
+        auto j = i;
+        j++;
+        while(j != mImpassableNodes.end())
+        {
+            (*i)->connectVisiblePoints(*j, mImpassableNodes);
+            j++;
+        }
+    }
+/*
+    mPaths.setPrimitiveType(sf::Lines);
 
+    sf::Vertex p1, p2;
+    p1.color = sf::Color::Red;
+    p2.color = p1.color;
 
-    for(auto& pNode : mImpassableNodes)
-        pNode->computeVisiblePoints(mImpassableNodes);
+    for(NodePtr& pNode : mImpassableNodes)
+        for(const TerrainCollissionNode::Point& point : pNode->getConvexAngles())
+        {
+            p1.position = point.pos;
+            for(const TerrainCollissionNode::Path* pPath : point.paths)
+            {
+                p2.position = pPath->p->pos;
+
+                mPaths.append(p1);
+                mPaths.append(p2);
+            }
+        }
+*/
 }
 
+
+std::list<const TerrainCollissionNode::Point*> Map::getVisiblePoints(sf::Vector2f p) const
+{
+    std::list<const TerrainCollissionNode::Point*> visiblePoints;
+    for(const NodePtr& pNode : mImpassableNodes)
+        pNode->getVisiblePoints(p, mImpassableNodes, visiblePoints);
+
+    assert(!visiblePoints.empty());
+    return visiblePoints;
+}
 
 const std::list<Map::NodePtr>& Map::getImpassableTerrain() const
 {
@@ -84,8 +134,10 @@ void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
     for(const NodePtr& pNode : mImpassableNodes)
     {
         target.draw(*pNode.get());
-        pNode->drawBoundingRect(target, states);
+        //pNode->drawBoundingRect(target, states);
     }
+
+    //target.draw(mPaths);
 }
 
 

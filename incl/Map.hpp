@@ -38,19 +38,26 @@ class Map : public sf::Drawable
         typedef std::unique_ptr<TerrainCollissionNode> NodePtr;
 
         Map(const std::string& filePath);
+        Map(const std::string& filePath, sf::Vector2f size);
 
         void load(const std::string& filePath);
         sf::FloatRect getBounds() const;
 
         virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-
+        std::list<const TerrainCollissionNode::Point*> getVisiblePoints(sf::Vector2f p) const;
         const std::list<NodePtr>& getImpassableTerrain() const;
+
+    private:
+        void buildMap();
 
     private:
         sf::Texture         mTexture;
         sf::RectangleShape  mDrawShape;
 
         std::list<NodePtr> mImpassableNodes;
+
+
+        sf::VertexArray     mPaths; ///< Debug
 
 };
 
