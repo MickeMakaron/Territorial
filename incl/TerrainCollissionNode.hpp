@@ -37,7 +37,6 @@ class TerrainCollissionNode : public SceneNode
         struct Point
         {
             sf::Vector2f        pos;
-            float               passWidth;
             std::list<Path*>    paths;
         };
 
@@ -47,6 +46,7 @@ class TerrainCollissionNode : public SceneNode
             float   passWidth;
             const Point*  p; ///< Destination point
             float   lengthSqrd;
+            bool isEdge;
         };
 
         TerrainCollissionNode(const std::vector<sf::Vector2f>& points);
@@ -55,13 +55,18 @@ class TerrainCollissionNode : public SceneNode
         virtual sf::FloatRect   getBoundingRect() const;
         void    setPoints(const std::vector<sf::Vector2f>& points);
 
-        const std::list<Point>& getConvexAngles() const;
+        std::list<Point>& getConvexAngles();
         bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b) const;
-        void computeVisiblePoints(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
-        void computeVisiblePoints();
+        bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b, std::pair<const Point*, const Point*>& entry, std::pair<const Point*, const Point*>& exit) const;
+        void connectVisiblePoints(std::unique_ptr<TerrainCollissionNode>& node, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
+        void connectPoints(Point& from, Point& to);
         bool convexAngleContains(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c, sf::Vector2f p) const;
         std::pair<double, double> getMinMaxAngles(sf::Vector2f pos);
+
+        void getVisiblePoints(sf::Vector2f p, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes, std::list<const Point*>& visiblePoints) const;
     private:
+
+        void connectVisiblePoints();
 
         bool addSectorIfVisible(std::vector<std::pair<double, double>>& sectors, const std::pair<double, double>& sector);
         void mergeSectors(std::vector<std::pair<double, double>>& sectors);
@@ -69,7 +74,7 @@ class TerrainCollissionNode : public SceneNode
         std::vector<sf::Vector2f> computeConvexAngles();
         void initializeConvexPoints(std::vector<sf::Vector2f> convexAngles);
 
-        bool lineIntersects(sf::Vector2f p1, sf::Vector2f p2, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const;
+        bool lineIntersects(sf::Vector2f p1, sf::Vector2f p2, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const;
 
         virtual void            drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
         virtual void            updateCurrent(CommandQueue&);

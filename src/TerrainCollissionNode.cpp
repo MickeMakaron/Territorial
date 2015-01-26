@@ -53,7 +53,7 @@ void TerrainCollissionNode::setPoints(const std::vector<sf::Vector2f>& points)
     mShape.setPoints(mPoints);
 
     initializeConvexPoints(computeConvexAngles());
-    computeVisiblePoints();
+    connectVisiblePoints();
 }
 
 void TerrainCollissionNode::initializeConvexPoints(std::vector<sf::Vector2f> convexAngles)
@@ -69,7 +69,7 @@ void TerrainCollissionNode::initializeConvexPoints(std::vector<sf::Vector2f> con
     }
 }
 
-bool TerrainCollissionNode::lineIntersects(sf::Vector2f p1, sf::Vector2f p2, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const
+bool TerrainCollissionNode::lineIntersects(sf::Vector2f p1, sf::Vector2f p2, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const
 {
     for(const std::unique_ptr<TerrainCollissionNode>& pNode : nodes)
         if(pNode->isLineIntersecting(p1, p2))
@@ -87,7 +87,7 @@ TerrainCollissionNode::Path::Path(const Point* from, const Point* to, float pass
 }
 
 // Compute visible points on self.
-void TerrainCollissionNode::computeVisiblePoints()
+void TerrainCollissionNode::connectVisiblePoints()
 {
     // Make sure we have at least a triangle.
     assert(mConvexPoints.size() > 2);
@@ -125,82 +125,114 @@ void TerrainCollissionNode::computeVisiblePoints()
 }
 
 
-// Compute visible points on other nodes.
-void TerrainCollissionNode::computeVisiblePoints(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
+void TerrainCollissionNode::connectPoints(Point& from, Point& to)
 {
+    mPaths.push_back(Path(&from, &to));
+    from.paths.push_back(&mPaths.back());
+}
+
+/*
+float TerrainCollissionNode::getPassWidth(sf::Vector2f p1, sf::Vector2f p2, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
+{
+
+}
+*/
+
+// Compute visible points on other nodes.
+void TerrainCollissionNode::connectVisiblePoints(std::unique_ptr<TerrainCollissionNode>& node, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
+{
+    assert(node.get() != this);
     for(Point& p1 : mConvexPoints)
     {
-        for(const std::unique_ptr<TerrainCollissionNode>& pNode : nodes)
+        for(Point& p2 : node->getConvexAngles())
         {
-            // Only check other nodes.
-            if(pNode.get() != this)
+            if(!lineIntersects(p1.pos, p2.pos, nodes))
             {
-                const std::list<Point>& points = pNode->getConvexAngles();
+                //float passWidth = getPassWidth(p1.pos, p2.pos, nodes);
 
-                for(const Point& p2 : points)
+                connectPoints(p1, p2);
+                node->connectPoints(p2, p1);
+            }
+        }
+    }
+
+    // Code below might get used some day.
+    {
+        /*
+        for(Point& p1 : mConvexPoints)
+        {
+            for(const Map::NodePtr& pNode : nodes)
+            {
+                // Only check other nodes.
+                if(pNode.get() != this)
                 {
-                    if(!lineIntersects(p1.pos, p2.pos, nodes))
+                    const std::list<Point>& points = pNode->getConvexAngles();
+
+                    for(const Point& p2 : points)
                     {
-                        mPaths.push_back(Path(&p1, &p2));
-                        p1.paths.push_back(&mPaths.back());
+                        if(!lineIntersects(p1.pos, p2.pos, nodes))
+                        {
+                            mPaths.push_back(Path(&p1, &p2));
+                            p1.paths.push_back(&mPaths.back());
+                        }
                     }
                 }
             }
         }
-    }
-
-    /*
-    for(Point& convexPoint : mConvexPoints)
-    {
-        // Sort nodes by shortest distance to the point.
-        auto comparator = [convexPoint](const std::unique_ptr<TerrainCollissionNode>& a, const std::unique_ptr<TerrainCollissionNode>& b)
+        */
+        /*
+        for(Point& convexPoint : mConvexPoints)
         {
-            sf::FloatRect aRect = a->getBoundingRect();
-            sf::FloatRect bRect = b->getBoundingRect();
-
-            return lengthSqrd(sf::Vector2f(aRect.left, aRect.top) - convexPoint.pos) < lengthSqrd(sf::Vector2f(bRect.left, bRect.top) - convexPoint.pos);
-        };
-
-        std::sort(nodes.begin(), nodes.end(), comparator);
-
-
-        // Get visible nodes.
-        typedef std::pair<double, double> TCNSector;
-        std::vector<TCNSector> sectors = {TCNSector(0, 0)};
-        std::vector<const TerrainCollissionNode*> visibleNodes;
-        std::vector<TCNSector> visibleNodesSectors;
-        for(const std::unique_ptr<TerrainCollissionNode>& pNode : nodes)
-        {
-            TCNSector minMaxAngles = pNode->getMinMaxAngles(convexPoint.pos);
-            minMaxAngles.first += PI;
-            minMaxAngles.second += PI;
-
-            bool isVisible = false;
-            TCNSector& sector = sectors.front();
-
-            if(addSectorIfVisible(sectors, minMaxAngles))
+            // Sort nodes by shortest distance to the point.
+            auto comparator = [convexPoint](const std::unique_ptr<TerrainCollissionNode>& a, const std::unique_ptr<TerrainCollissionNode>& b)
             {
-                visibleNodes.push_back(pNode->get());
-                visibleNodesSectors.push_back(minMaxAngles);
+                sf::FloatRect aRect = a->getBoundingRect();
+                sf::FloatRect bRect = b->getBoundingRect();
+
+                return lengthSqrd(sf::Vector2f(aRect.left, aRect.top) - convexPoint.pos) < lengthSqrd(sf::Vector2f(bRect.left, bRect.top) - convexPoint.pos);
+            };
+
+            std::sort(nodes.begin(), nodes.end(), comparator);
+
+
+            // Get visible nodes.
+            typedef std::pair<double, double> TCNSector;
+            std::vector<TCNSector> sectors = {TCNSector(0, 0)};
+            std::vector<const TerrainCollissionNode*> visibleNodes;
+            std::vector<TCNSector> visibleNodesSectors;
+            for(const std::unique_ptr<TerrainCollissionNode>& pNode : nodes)
+            {
+                TCNSector minMaxAngles = pNode->getMinMaxAngles(convexPoint.pos);
+                minMaxAngles.first += PI;
+                minMaxAngles.second += PI;
+
+                bool isVisible = false;
+                TCNSector& sector = sectors.front();
+
+                if(addSectorIfVisible(sectors, minMaxAngles))
+                {
+                    visibleNodes.push_back(pNode->get());
+                    visibleNodesSectors.push_back(minMaxAngles);
+                }
+
+
+                if(sectors.size() == 1 && (sectors[0].first == PI && sectors[0].second == PI * 3))
+                    break;
             }
 
-
-            if(sectors.size() == 1 && (sectors[0].first == PI && sectors[0].second == PI * 3))
-                break;
-        }
-
-        for(int i = 0; i < visibleNodes.size(); i++)
-        {
-            std::list<Point>& points = visibleNodes[i]->getConvexAngles();
-
-
-            for(int j = 0; i < points.size(); j++Point& p : points)
+            for(int i = 0; i < visibleNodes.size(); i++)
             {
-                if()
+                std::list<Point>& points = visibleNodes[i]->getConvexAngles();
+
+
+                for(int j = 0; i < points.size(); j++Point& p : points)
+                {
+                    if()
+                }
             }
         }
+        */
     }
-    */
 }
 
 
@@ -375,7 +407,58 @@ bool TerrainCollissionNode::isLineIntersecting(sf::Vector2f a, sf::Vector2f b) c
     return false;
 }
 
-const std::list<TerrainCollissionNode::Point>& TerrainCollissionNode::getConvexAngles() const
+bool TerrainCollissionNode::isLineIntersecting(sf::Vector2f a, sf::Vector2f b, std::pair<const Point*, const Point*>& entry, std::pair<const Point*, const Point*>& exit) const
+{
+    /*
+    std::list<std::pair<Point, Point>> intersectedEdges;
+    std::list<sf::Vector2f> intersections;
+    for(unsigned int i = 0; i < mPoints.size() - 1 && intersections.size() < 2; i++)
+    {
+        sf::Vector2f intersection;
+        if(mPoints[i] == a || mPoints[i] == b || mPoints[i + 1] == a || mPoints[i + 1] == b)
+        {
+
+        }
+        else if(intersects(mPoints[i], mPoints[i + 1], a, b, &intersection))
+        {
+
+
+            intersectedEdges.push_back(std::make_pair(mPoints[i], mPoints[i + 1]));
+            intersections.push_back(intersection)
+        }
+
+    }
+
+    if(intersections.empty())
+        return false;
+    else
+    {
+        assert(intersections.size() == 2);
+        if(lengthSqrd(intersections.front() - a) < lengthSqrd(intersections.back() - b))
+        {
+            entry = intersectedEdges.front();
+            exit = intersectedEdges.back();
+        }
+        else
+        {
+            entry = intersectedEdges.back();
+            exit = intersectedEdges.front();
+        }
+
+        return true;
+    }
+*/
+
+}
+
+void TerrainCollissionNode::getVisiblePoints(sf::Vector2f p, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes, std::list<const Point*>& visiblePoints) const
+{
+    for(const Point& p1 : mConvexPoints)
+        if(!lineIntersects(p, p1.pos, nodes))
+            visiblePoints.push_back(&p1);
+}
+
+std::list<TerrainCollissionNode::Point>& TerrainCollissionNode::getConvexAngles()
 {
     return mConvexPoints;
 }
