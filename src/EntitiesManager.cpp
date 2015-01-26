@@ -47,6 +47,7 @@ void EntitiesManager::draw(sf::RenderTarget& target) const
     target.draw(mEntitiesGraph);
     mPathfinder.draw(target);
 
+/*
     // Quadtree debugging
     sf::RectangleShape shape;
     shape.setFillColor(sf::Color::Transparent);
@@ -64,6 +65,8 @@ void EntitiesManager::draw(sf::RenderTarget& target) const
 
         target.draw(shape);
     }
+
+*/
 }
 
 std::list<Pathfinder::Waypoint> EntitiesManager::getPath(sf::Vector2f a, sf::Vector2f b)

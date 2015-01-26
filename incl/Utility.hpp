@@ -84,7 +84,7 @@ float           dot(sf::Vector2f a, sf::Vector2f b);
 bool    contains(sf::FloatRect lhs, sf::FloatRect rhs);
 bool    intersects(sf::FloatRect lhs, sf::FloatRect rhs);
 bool    intersects(sf::Vector2f p, sf::FloatRect rect);
-bool    intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f b2);
+bool    intersects(sf::Vector2f a1, sf::Vector2f a2, sf::Vector2f b1, sf::Vector2f b2, sf::Vector2f* intersection = nullptr);
 
 bool    isAngleConvex(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c);
 
