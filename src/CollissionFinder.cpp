@@ -22,6 +22,7 @@
 
 #include "CollissionFinder.hpp"
 #include "EntityNode.hpp"
+#include "Utility.hpp"
 
 std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions(std::set<std::pair<EntityNode*, EntityNode*>>& nearbyEntities)
 {
@@ -32,15 +33,17 @@ std::list<CollissionFinder::CollissionData> CollissionFinder::getCollissions(std
 
         sf::Vector2f dVec = pair.first->getPosition() - pair.second->getPosition();
 
-        float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
+        //float dSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
 
-        if(dSqrd < radiusSum * radiusSum)
+        if(std::fabs(dVec.x) < radiusSum && std::fabs(dVec.y) < radiusSum)
+        //if(dSqrd < radiusSum * radiusSum)
         {
+
             CollissionData collission;
             collission.lNode = pair.first;
             collission.rNode = pair.second;
 
-            float d = sqrtf(dSqrd);
+            float d = length(dVec);
             collission.penetrationDepth = radiusSum - d;
             collission.unitVector = dVec / d;
 
