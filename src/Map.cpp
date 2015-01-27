@@ -75,21 +75,27 @@ void Map::buildMap()
         }
 
         for(auto& p : points)
-            p += sf::Vector2f(-300 * 10, 200);
+            p += sf::Vector2f(-300 * 10, 70);
     }
+
+    //for(NodePtr& pNode : mImpassableNodes)
+     //   pNode->connectVisiblePoints(pNode, mImpassableNodes);
 
 
     for(auto i = mImpassableNodes.begin(); i != mImpassableNodes.end(); i++)
     {
         auto j = i;
-        j++;
         while(j != mImpassableNodes.end())
         {
             (*i)->connectVisiblePoints(*j, mImpassableNodes);
             j++;
         }
     }
-/*
+
+    for(NodePtr& pNode : mImpassableNodes)
+        pNode->computePassWidths(mImpassableNodes);
+
+
     mPaths.setPrimitiveType(sf::Lines);
 
     sf::Vertex p1, p2;
@@ -108,7 +114,7 @@ void Map::buildMap()
                 mPaths.append(p2);
             }
         }
-*/
+
 }
 
 
@@ -137,7 +143,7 @@ void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
         //pNode->drawBoundingRect(target, states);
     }
 
-    //target.draw(mPaths);
+    target.draw(mPaths);
 }
 
 

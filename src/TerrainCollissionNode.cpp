@@ -52,22 +52,9 @@ void TerrainCollissionNode::setPoints(const std::vector<sf::Vector2f>& points)
         mPoints.push_back(mPoints.front());
     mShape.setPoints(mPoints);
 
-    initializeConvexPoints(computeConvexAngles());
-    connectVisiblePoints();
+    computeConvexAngles();
 }
 
-void TerrainCollissionNode::initializeConvexPoints(std::vector<sf::Vector2f> convexAngles)
-{
-    Point p;
-    mConvexPoints.clear();
-
-    // Initialize position.
-    for(sf::Vector2f point : convexAngles)
-    {
-        p.pos = point;
-        mConvexPoints.push_back(p);
-    }
-}
 
 bool TerrainCollissionNode::lineIntersects(sf::Vector2f p1, sf::Vector2f p2, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const
 {
@@ -78,86 +65,173 @@ bool TerrainCollissionNode::lineIntersects(sf::Vector2f p1, sf::Vector2f p2, con
     return false;
 }
 
-TerrainCollissionNode::Path::Path(const Point* from, const Point* to, float passWidth)
+TerrainCollissionNode::Path::Path(Point* from, Point* to, bool isEdge, float passWidth)
 : p(to)
+, isEdge(isEdge)
 , passWidth(passWidth)
 {
     sf::Vector2f dVec = from->pos - to->pos;
     lengthSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
 }
 
-// Compute visible points on self.
-void TerrainCollissionNode::connectVisiblePoints()
+TerrainCollissionNode::Point::Point(sf::Vector2f prev, sf::Vector2f pos, sf::Vector2f next)
+: pos(pos)
+, prev(prev)
+, next(next)
 {
-    // Make sure we have at least a triangle.
-    assert(mConvexPoints.size() > 2);
+    sf::Vector2f bisectorVec = (prev - pos) + (next - pos);
+    float l = length(bisectorVec);
 
-    // Previous, current and the next point.
-    std::list<Point>::iterator iPrev, iCurr, iNext;
-    iPrev = mConvexPoints.end();
-    iPrev--;
-    iNext = mConvexPoints.begin();
-    iNext++;
-    for(auto iCurr = mConvexPoints.begin(); iCurr != mConvexPoints.end(); iCurr++)
-    {
-        for(auto it = iNext; it != mConvexPoints.end(); it++)
-        {
-            if(!convexAngleContains(iPrev->pos, iCurr->pos, iNext->pos, it->pos) && !isLineIntersecting(iCurr->pos, it->pos))
-            {
-                // Path curr->it
-                mPaths.push_back(Path(&(*iCurr), &(*it)));
-                iCurr->paths.push_back(&mPaths.back());
-
-                // Path it->curr
-                mPaths.push_back(Path(&(*it), &(*iCurr)));
-                it->paths.push_back(&mPaths.back());
-            }
-        }
-
-        iPrev++;
-        if(iPrev == mConvexPoints.end())
-            iPrev = mConvexPoints.begin();
-
-        iNext++;
-        if(iNext == mConvexPoints.end())
-            break;
-    }
+    bisector = -bisectorVec / l;
 }
 
-
-void TerrainCollissionNode::connectPoints(Point& from, Point& to)
-{
-    mPaths.push_back(Path(&from, &to));
-    from.paths.push_back(&mPaths.back());
-}
-
-/*
-float TerrainCollissionNode::getPassWidth(sf::Vector2f p1, sf::Vector2f p2, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
-{
-
-}
-*/
-
-// Compute visible points on other nodes.
+// Connect points to other nodes.
 void TerrainCollissionNode::connectVisiblePoints(std::unique_ptr<TerrainCollissionNode>& node, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
 {
-    assert(node.get() != this);
+    if(node.get() == this)
+    {
+        connectVisiblePoints(nodes);
+        return;
+    }
+
     for(Point& p1 : mConvexPoints)
     {
         for(Point& p2 : node->getConvexAngles())
         {
-            if(!lineIntersects(p1.pos, p2.pos, nodes))
-            {
-                //float passWidth = getPassWidth(p1.pos, p2.pos, nodes);
-
-                connectPoints(p1, p2);
-                node->connectPoints(p2, p1);
-            }
+            if(!convexAngleContains(p1.prev, p1.pos, p1.next, p2.pos) && !convexAngleContains(p2.prev, p2.pos, p2.next, p1.pos))
+                if(!lineIntersects(p1.pos, p2.pos, nodes))
+                {
+                    connectPoints(p1, p2, false);
+                    node->connectPoints(p2, p1, false);
+                }
         }
     }
 
-    // Code below might get used some day.
+/*
+
+    // Make sure we have at least a triangle.
+    assert(mConvexPoints.size() > 2);
+
+    // Previous, current and the next point.
+    auto iPointsPrev = mPoints.begin();
+    auto iPointsCurr = mPoints.begin();
+    auto iPointsNext = mPoints.begin();
+
+    for(auto iCurr = mConvexPoints.begin(); iCurr != mConvexPoints.end(); iCurr++)
     {
+        iPointsCurr = std::find(iPointsCurr, mPoints.end(), iCurr->pos);
+
+        // If this assert fails, this node has either removed a point from mPoint or
+        // added a faulty point to mConvexPoint.
+        assert(iPointsCurr != mPoints.end());
+
+        if(iPointsCurr == mPoints.begin())
+        {
+            iPointsPrev = mPoints.end();
+            iPointsPrev--;
+        }
+        else
+            iPointsPrev = iPointsCurr;
+
+        iPointsPrev--;
+
+        iPointsNext = iPointsCurr;
+        iPointsNext++;
+
+        assert(iPointsNext != mPoints.end());
+
+        for(Point& p : node->getConvexAngles())
+        {
+            if(p.pos != iCurr->pos)
+            {
+                bool isVisible = false;
+                bool isEdge = false;
+
+                if((node.get() == this) && (p.pos == *iPointsNext || p.pos == *iPointsPrev))
+                {
+                    if(!lineIntersects(iCurr->pos, p.pos, nodes))
+                    {
+                        isVisible = true;
+                        isEdge = true;
+                    }
+                }
+                else if(!convexAngleContains(*iPointsPrev, iCurr->pos, *iPointsNext, p.pos) && !convexAngleContains())
+                    if(!lineIntersects(iCurr->pos, p.pos, nodes))
+                        isVisible = true;
+
+                if(isVisible)
+                {
+                    connectPoints(*iCurr, p, isEdge);
+                    node->connectPoints(p, *iCurr, isEdge);
+                }
+            }
+        }
+    }
+    */
+}
+
+
+TerrainCollissionNode::Path* TerrainCollissionNode::connectPoints(Point& from, Point& to, bool isEdge)
+{
+    mPaths.push_back(Path(&from, &to, false));
+    from.paths.push_back(&mPaths.back());
+
+    return &mPaths.back();
+}
+
+
+void TerrainCollissionNode::computePassWidths(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
+{
+    for(Path& path : mPaths)
+    {
+        float shortestDistance = std::numeric_limits<float>::max();
+        float defaultPassWidth = 500.f;
+
+        for(auto& pNode : nodes)
+        {
+            for(Point& p : pNode->getConvexAngles())
+            {
+            }
+        }
+
+    }
+}
+
+
+// Connect points on self.
+void TerrainCollissionNode::connectVisiblePoints(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
+{
+    for(auto i = mConvexPoints.begin(); i != mConvexPoints.end(); i++)
+    {
+        auto j = i;
+        j++;
+        while(j != mConvexPoints.end())
+        {
+            bool isVisible = false;
+            bool isEdge = false;
+
+            if(j->pos == i->next)
+            {
+                if(!lineIntersects(i->pos, j->pos, nodes))
+                {
+                    isVisible = true;
+                    isEdge = true;
+                }
+            }
+            else if(!convexAngleContains(i->prev, i->pos, i->next, j->pos) && !lineIntersects(i->pos, j->pos, nodes))
+                isVisible = true;
+
+            if(isVisible)
+            {
+                connectPoints(*i, *j, isEdge);
+                connectPoints(*j, *i, isEdge);
+            }
+
+            j++;
+        }
+    }
+    // Code below might get used some day.
+    //{
         /*
         for(Point& p1 : mConvexPoints)
         {
@@ -232,7 +306,7 @@ void TerrainCollissionNode::connectVisiblePoints(std::unique_ptr<TerrainCollissi
             }
         }
         */
-    }
+    //}
 }
 
 
@@ -327,42 +401,33 @@ void TerrainCollissionNode::mergeSectors(std::vector<std::pair<double, double>>&
 }
 
 
-std::vector<sf::Vector2f> TerrainCollissionNode::computeConvexAngles()
+void TerrainCollissionNode::computeConvexAngles()
 {
-    std::vector<sf::Vector2f> convexAngles;
-    /*
-     * If the number of points is not greater than
-     * five, we only have convex angles. (First and
-     * last points are the same)
-     */
-     if(mPoints.size() <= 5)
-        convexAngles = mPoints;
-     else
-     {
-        // Previous, current and the next point.
-        sf::Vector2f prev, curr, next;
+    // Make sure we have at least a triangle.
+    assert(mPoints.size() > 3);
 
-        // Examine the first angle.
-        prev = mPoints[mPoints.size() - 2];
-        curr = mPoints[0];
-        next = mPoints[1];
+    // Previous, current and the next point.
+    sf::Vector2f prev, curr, next;
+
+    // Examine the first angle.
+    prev = mPoints[mPoints.size() - 2];
+    curr = mPoints[0];
+    next = mPoints[1];
+
+    mConvexPoints.clear();
+    if(isAngleConvex(prev, curr, next))
+        mConvexPoints.push_back(Point(prev, curr, next));
+
+    // Now do the rest.
+    for(unsigned int i = 1; i < mPoints.size() - 1; i++)
+    {
+        prev = mPoints[i - 1];
+        curr = mPoints[i];
+        next = mPoints[i + 1];
 
         if(isAngleConvex(prev, curr, next))
-            convexAngles.push_back(curr);
-
-        // Now do the rest.
-        for(unsigned int i = 1; i < mPoints.size() - 1; i++)
-        {
-            prev = mPoints[i - 1];
-            curr = mPoints[i];
-            next = mPoints[i + 1];
-
-            if(isAngleConvex(prev, curr, next))
-                convexAngles.push_back(curr);
-        }
-     }
-
-    return convexAngles;
+            mConvexPoints.push_back(Point(prev, curr, next));
+    }
 }
 
 // Does a convex angle enclose a point?
@@ -407,9 +472,10 @@ bool TerrainCollissionNode::isLineIntersecting(sf::Vector2f a, sf::Vector2f b) c
     return false;
 }
 
+/*
 bool TerrainCollissionNode::isLineIntersecting(sf::Vector2f a, sf::Vector2f b, std::pair<const Point*, const Point*>& entry, std::pair<const Point*, const Point*>& exit) const
 {
-    /*
+
     std::list<std::pair<Point, Point>> intersectedEdges;
     std::list<sf::Vector2f> intersections;
     for(unsigned int i = 0; i < mPoints.size() - 1 && intersections.size() < 2; i++)
@@ -447,9 +513,10 @@ bool TerrainCollissionNode::isLineIntersecting(sf::Vector2f a, sf::Vector2f b, s
 
         return true;
     }
-*/
+
 
 }
+*/
 
 void TerrainCollissionNode::getVisiblePoints(sf::Vector2f p, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes, std::list<const Point*>& visiblePoints) const
 {

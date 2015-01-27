@@ -36,17 +36,21 @@ class TerrainCollissionNode : public SceneNode
 
         struct Point
         {
+            Point(sf::Vector2f prev, sf::Vector2f pos, sf::Vector2f next);
             sf::Vector2f        pos;
+            sf::Vector2f        bisector; ///< Unit vector of the (angle's) bisector, pointing outwards.
             std::list<Path*>    paths;
+            sf::Vector2f        prev;
+            sf::Vector2f        next;
         };
 
         struct Path
         {
-            Path(const Point* from, const Point* to, float passWidth = 200);
-            float   passWidth;
-            const Point*  p; ///< Destination point
-            float   lengthSqrd;
-            bool isEdge;
+            Path(Point* from, Point* to, bool isEdge, float passWidth = 200);
+            float           passWidth;
+            const Point*    p; ///< Destination point
+            float           lengthSqrd;
+            const bool      isEdge;
         };
 
         TerrainCollissionNode(const std::vector<sf::Vector2f>& points);
@@ -57,22 +61,22 @@ class TerrainCollissionNode : public SceneNode
 
         std::list<Point>& getConvexAngles();
         bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b) const;
-        bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b, std::pair<const Point*, const Point*>& entry, std::pair<const Point*, const Point*>& exit) const;
+        //bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b, std::pair<const Point*, const Point*>& entry, std::pair<const Point*, const Point*>& exit) const;
         void connectVisiblePoints(std::unique_ptr<TerrainCollissionNode>& node, std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
-        void connectPoints(Point& from, Point& to);
+        Path* connectPoints(Point& from, Point& to, bool isEdge = false);
         bool convexAngleContains(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c, sf::Vector2f p) const;
         std::pair<double, double> getMinMaxAngles(sf::Vector2f pos);
 
+        void computePassWidths(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
         void getVisiblePoints(sf::Vector2f p, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes, std::list<const Point*>& visiblePoints) const;
     private:
 
-        void connectVisiblePoints();
+        void connectVisiblePoints(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
 
         bool addSectorIfVisible(std::vector<std::pair<double, double>>& sectors, const std::pair<double, double>& sector);
         void mergeSectors(std::vector<std::pair<double, double>>& sectors);
 
-        std::vector<sf::Vector2f> computeConvexAngles();
-        void initializeConvexPoints(std::vector<sf::Vector2f> convexAngles);
+        void computeConvexAngles();
 
         bool lineIntersects(sf::Vector2f p1, sf::Vector2f p2, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes) const;
 
@@ -81,8 +85,8 @@ class TerrainCollissionNode : public SceneNode
 
     private:
         PolygonShape mShape;
-        std::vector<sf::Vector2f> mPoints;
-        std::list<Point>        mConvexPoints;
+        std::vector<sf::Vector2f> mPoints; ///< The first and last points are always the same.
+        std::list<Point>        mConvexPoints; ///< The first and last points are NOT the same.
         std::list<Path>         mPaths;
 
 
