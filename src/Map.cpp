@@ -63,6 +63,22 @@ void Map::buildMap()
 
     mImpassableNodes.push_back(std::move(node));
 
+
+    for(auto& p : points)
+        p += sf::Vector2f(300, 10);
+
+    mImpassableNodes.push_back(std::move(NodePtr(new TerrainCollissionNode(points))));
+
+
+    for(auto& p : points)
+        p += sf::Vector2f(300, -10);
+
+    mImpassableNodes.push_back(std::move(NodePtr(new TerrainCollissionNode(points))));
+
+
+
+
+/*
     for(unsigned int x = 0; x < 10; x++)
     {
         for(unsigned int y = 0; y < 10; y++)
@@ -76,10 +92,7 @@ void Map::buildMap()
 
         for(auto& p : points)
             p += sf::Vector2f(-300 * 10, 70);
-    }
-
-    //for(NodePtr& pNode : mImpassableNodes)
-     //   pNode->connectVisiblePoints(pNode, mImpassableNodes);
+    }*/
 
 
     for(auto i = mImpassableNodes.begin(); i != mImpassableNodes.end(); i++)
@@ -96,12 +109,53 @@ void Map::buildMap()
         pNode->computePassWidths(mImpassableNodes);
 
 
-    mPaths.setPrimitiveType(sf::Lines);
+    mPaths.setPrimitiveType(sf::Quads);
 
-    sf::Vertex p1, p2;
+
+    sf::Vertex p1, p2, p3, p4;
     p1.color = sf::Color::Red;
-    p2.color = p1.color;
+    p2 = p3 = p4 = p1;
 
+
+    for(NodePtr& pNode : mImpassableNodes)
+        for(const TerrainCollissionNode::Point& point : pNode->getConvexAngles())
+        {
+            for(const TerrainCollissionNode::Path* pPath : point.paths)
+            {
+                if(std::find(pNode->getPoints().begin(), pNode->getPoints().end(), pPath->p->pos) != pNode->getPoints().end() && pPath->isEdge)//pPath->p->pos != point.next && pPath->p->pos != point.prev)
+                {
+                    /*
+                    sf::Vector2f right(pPath->direction.y, -pPath->direction.x);
+                    p1.position = point.pos - right * pPath->passWidth;
+                    p2.position = p1.position + pPath->direction * pPath->length;
+                    p3.position = p2.position + right * pPath->passWidth * 2.f;
+                    p4.position = p3.position - pPath->direction * pPath->length;
+
+                    mPaths.append(p1);
+                    mPaths.append(p2);
+                    mPaths.append(p3);
+                    mPaths.append(p4);
+                    */
+
+                    if(pPath->p->pos == point.prev)
+                    {
+                        sf::Vector2f right(pPath->direction.y, -pPath->direction.x);
+                        p1.position = point.pos - right * pPath->passWidth;
+                        p2.position = p1.position + pPath->direction * pPath->length;
+                        p3.position = p2.position + right * pPath->passWidth;
+                        p4.position = p3.position - pPath->direction * pPath->length;
+
+                        mPaths.append(p1);
+                        mPaths.append(p2);
+                        mPaths.append(p3);
+                        mPaths.append(p4);
+                    }
+
+                }
+            }
+        }
+
+/*
     for(NodePtr& pNode : mImpassableNodes)
         for(const TerrainCollissionNode::Point& point : pNode->getConvexAngles())
         {
@@ -114,7 +168,7 @@ void Map::buildMap()
                 mPaths.append(p2);
             }
         }
-
+*/
 }
 
 
@@ -136,14 +190,14 @@ const std::list<Map::NodePtr>& Map::getImpassableTerrain() const
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
     target.draw(mDrawShape);
-
+    target.draw(mPaths);
     for(const NodePtr& pNode : mImpassableNodes)
     {
         target.draw(*pNode.get());
         //pNode->drawBoundingRect(target, states);
     }
 
-    target.draw(mPaths);
+
 }
 
 
