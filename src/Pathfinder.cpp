@@ -134,7 +134,7 @@ Pathfinder::PointPtr Pathfinder::findSmallestF(sf::Vector2f pos, sf::Vector2f de
     return pMinPoint;
 }
 
-Pathfinder::PathPtr Pathfinder::findSmallestF(sf::Vector2f destination, std::list<TerrainCollissionNode::Path*> paths) const
+Pathfinder::PathPtr Pathfinder::findSmallestF(float diameter, sf::Vector2f destination, std::list<TerrainCollissionNode::Path*> paths) const
 {
     assert(!paths.empty());
 
@@ -142,11 +142,17 @@ Pathfinder::PathPtr Pathfinder::findSmallestF(sf::Vector2f destination, std::lis
     PathPtr pMinPath = paths.front();
     for(PathPtr pPath : paths)
     {
-        float f = getF(pPath, destination);
-        if(f < minF)
+
+        bool fitsPath = pPath->isEdge ? diameter < pPath->passWidth : diameter / 2 < pPath->passWidth;
+
+        if(fitsPath)
         {
-            minF = f;
-            pMinPath = pPath;
+            float f = getF(pPath, destination);
+            if(f < minF)
+            {
+                minF = f;
+                pMinPath = pPath;
+            }
         }
     }
 
@@ -154,7 +160,7 @@ Pathfinder::PathPtr Pathfinder::findSmallestF(sf::Vector2f destination, std::lis
 }
 
 
-std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector2f destination)
+std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f pos, sf::Vector2f destination)
 {
     std::list<Waypoint> wayPoints;
 
@@ -242,7 +248,6 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector
         }
 
         assert(start && goal);
-
         auto point = start;
         std::list<PathPtr> paths;
         while(point != goal)
@@ -250,7 +255,8 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(sf::Vector2f pos, sf::Vector
             const std::list<TerrainCollissionNode::Path*>& possiblePaths = point->paths;
             assert(possiblePaths.size() > 0);
 
-            paths.push_back(findSmallestF(goal->pos, possiblePaths));
+
+            paths.push_back(findSmallestF(diameter, goal->pos, possiblePaths));
             point = paths.back()->p;
         }
 

@@ -54,7 +54,7 @@ class Pathfinder
         };
 
         void draw(sf::RenderTarget& target) const;
-        std::list<Waypoint> getPath(sf::Vector2f pos, sf::Vector2f destination);
+        std::list<Waypoint> getPath(float diameter, sf::Vector2f pos, sf::Vector2f destination);
 
     private:
         typedef const TerrainCollissionNode::Point* PointPtr;
@@ -63,7 +63,7 @@ class Pathfinder
         float       getF(PathPtr pPath, sf::Vector2f target) const;
         float       getF(sf::Vector2f start, sf::Vector2f p, sf::Vector2f target) const;
         PointPtr    findSmallestF(sf::Vector2f pos, sf::Vector2f destination, std::list<PointPtr> points) const;
-        PathPtr     findSmallestF(sf::Vector2f destination, std::list<TerrainCollissionNode::Path*> paths) const;
+        PathPtr     findSmallestF(float diameter, sf::Vector2f destination, std::list<TerrainCollissionNode::Path*> paths) const;
         bool        lineIntersectsRect(sf::Vector2f p1, sf::Vector2f p2, sf::FloatRect rect) const;
         bool        pathIsObstructed(sf::Vector2f from, sf::Vector2f to) const;
 
