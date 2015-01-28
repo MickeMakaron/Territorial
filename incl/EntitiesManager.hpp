@@ -55,7 +55,7 @@ class EntitiesManager
 
         void insertEntity(std::unique_ptr<EntityNode> entity);
 
-        std::list<Pathfinder::Waypoint> getPath(sf::Vector2f a, sf::Vector2f b);
+        std::list<Pathfinder::Waypoint> getPath(float diameter, sf::Vector2f a, sf::Vector2f b);
 
     private:
         CommandQueue&       mCommandQueue;
