@@ -50,6 +50,8 @@ class TerrainCollissionNode : public SceneNode
             float           passWidth;
             const Point*    p; ///< Destination point
             float           lengthSqrd;
+            float           length;
+            sf::Vector2f    direction;
             const bool      isEdge;
         };
 
@@ -58,6 +60,7 @@ class TerrainCollissionNode : public SceneNode
         const Point* getClosestPoint(sf::Vector2f p, float* minSqrd = nullptr) const;
         virtual sf::FloatRect   getBoundingRect() const;
         void    setPoints(const std::vector<sf::Vector2f>& points);
+        const std::vector<sf::Vector2f>& getPoints() const;
 
         std::list<Point>& getConvexAngles();
         bool isLineIntersecting(sf::Vector2f a, sf::Vector2f b) const;
@@ -71,6 +74,7 @@ class TerrainCollissionNode : public SceneNode
         void getVisiblePoints(sf::Vector2f p, const std::list<std::unique_ptr<TerrainCollissionNode>>& nodes, std::list<const Point*>& visiblePoints) const;
     private:
 
+        float minDistanceSqrd(sf::Vector2f a, sf::Vector2f b, sf::Vector2f p) const;
         void connectVisiblePoints(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes);
 
         bool addSectorIfVisible(std::vector<std::pair<double, double>>& sectors, const std::pair<double, double>& sector);

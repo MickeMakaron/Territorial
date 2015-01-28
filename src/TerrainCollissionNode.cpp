@@ -70,8 +70,10 @@ TerrainCollissionNode::Path::Path(Point* from, Point* to, bool isEdge, float pas
 , isEdge(isEdge)
 , passWidth(passWidth)
 {
-    sf::Vector2f dVec = from->pos - to->pos;
+    sf::Vector2f dVec = to->pos - from->pos;
     lengthSqrd = dVec.x * dVec.x + dVec.y * dVec.y;
+    length = sqrtf(lengthSqrd);
+    direction = dVec / length;
 }
 
 TerrainCollissionNode::Point::Point(sf::Vector2f prev, sf::Vector2f pos, sf::Vector2f next)
@@ -106,7 +108,6 @@ void TerrainCollissionNode::connectVisiblePoints(std::unique_ptr<TerrainCollissi
                 }
         }
     }
-
 /*
 
     // Make sure we have at least a triangle.
@@ -173,28 +174,131 @@ void TerrainCollissionNode::connectVisiblePoints(std::unique_ptr<TerrainCollissi
 
 TerrainCollissionNode::Path* TerrainCollissionNode::connectPoints(Point& from, Point& to, bool isEdge)
 {
-    mPaths.push_back(Path(&from, &to, false));
+    mPaths.push_back(Path(&from, &to, isEdge));
     from.paths.push_back(&mPaths.back());
 
     return &mPaths.back();
 }
 
+const std::vector<sf::Vector2f>& TerrainCollissionNode::getPoints() const
+{
+    return mPoints;
+}
 
 void TerrainCollissionNode::computePassWidths(std::list<std::unique_ptr<TerrainCollissionNode>>& nodes)
 {
-    for(Path& path : mPaths)
+    for(Point& p : mConvexPoints)
     {
-        float shortestDistance = std::numeric_limits<float>::max();
-        float defaultPassWidth = 500.f;
-
-        for(auto& pNode : nodes)
+        sf::Vector2f p1 = p.pos;
+        for(Path* pPath : p.paths)
         {
-            for(Point& p : pNode->getConvexAngles())
-            {
-            }
-        }
+            float shortestDistanceSqrd = 10000.f;
 
+
+            sf::Vector2f p2 = pPath->p->pos;
+            for(auto& pNode : nodes)
+            {
+                const std::vector<sf::Vector2f>& points = pNode->getPoints();
+
+                auto iCurr = points.begin();
+                auto iNext = iCurr;
+                iNext++;
+
+                while(iNext != points.end())
+                {
+                    if(p1 != *iCurr && p1 != *iNext && p2 != *iCurr && p2 != *iNext)
+                    {
+                        if(pPath->isEdge)
+                        {
+                            float dCurrSqrd = shortestDistanceSqrd;
+                            float dNextSqrd = shortestDistanceSqrd;
+
+                            bool isClockwise = p1 == pPath->p->prev;
+
+                            // If clockwise
+                            if(p1 == pPath->p->prev)
+                            {
+                                if(!isAngleConvex(p1, p2, *iCurr))
+                                    dCurrSqrd = minDistanceSqrd(p1, p2, *iCurr);
+
+                                if(!isAngleConvex(p1, p2, *iNext))
+                                    dNextSqrd = minDistanceSqrd(p1, p2, *iNext);
+                            }
+                            else
+                            {
+                                if(isAngleConvex(p1, p2, *iCurr))
+                                    dCurrSqrd = minDistanceSqrd(p1, p2, *iCurr);
+
+                                if(isAngleConvex(p1, p2, *iNext))
+                                    dNextSqrd = minDistanceSqrd(p1, p2, *iNext);
+                            }
+
+                            float dSqrd = dCurrSqrd < dNextSqrd ? dCurrSqrd : dNextSqrd;
+                            if(dSqrd < shortestDistanceSqrd)
+                                shortestDistanceSqrd = dSqrd;
+                        }
+                        else
+                        {
+                            const std::list<float> distances =
+                            {
+                                minDistanceSqrd(*iCurr, *iNext, p1), // distance from p1 to the line iCurr->iNext
+                                minDistanceSqrd(*iCurr, *iNext, p2), // distance from p2 to the line iCurr->iNext
+                                minDistanceSqrd(p1, p2, *iCurr), // distance from iCurr to the line p1->p2
+                                minDistanceSqrd(p1, p2, *iNext) // distance from iNext to the line p1->p2
+                            };
+
+                            float dSqrd = *std::min_element(distances.begin(), distances.end());
+                            if(dSqrd < shortestDistanceSqrd)
+                                shortestDistanceSqrd = dSqrd;
+                        }
+
+                    }
+
+                    iCurr++;
+                    iNext++;
+                }
+            }
+
+
+            pPath->passWidth = sqrtf(shortestDistanceSqrd);
+
+        }
     }
+
+
+}
+
+// Get shortest distance between a line and a point
+float TerrainCollissionNode::minDistanceSqrd(sf::Vector2f a, sf::Vector2f b, sf::Vector2f p) const
+{
+    if(a == sf::Vector2f(300, 100) && b == sf::Vector2f(700, 100))
+        int flerp =0 ;
+
+    // If line's length is 0, i.e. its points reside in the same coordinates, the minimum distance is between any of these two points and p.
+
+    if(a == b)
+        return lengthSqrd(p - a);
+
+
+
+    // l1 = distance between line's points
+    // l2 = distance between line's first point and p
+    const sf::Vector2f  l1 = b - a;
+    const float l1LengthSqrd = lengthSqrd(l1);
+    const sf::Vector2f  l2 = p - a;
+
+    const float dotProduct = (l2.x * l1.x + l2.y * l1.y) / l1LengthSqrd;
+
+    // No projection found, p is closest to line's first point.
+    if(dotProduct < 0.f)
+        return lengthSqrd(p - a);
+
+    // No projection found, p is closest to line's second point.
+    if(dotProduct > 1.f)
+        return lengthSqrd(p - b);
+
+    // Projection found, return distance between p and projection.
+    return lengthSqrd(p - (a + dotProduct * l1));
 }
 
 
@@ -210,7 +314,11 @@ void TerrainCollissionNode::connectVisiblePoints(std::list<std::unique_ptr<Terra
             bool isVisible = false;
             bool isEdge = false;
 
-            if(j->pos == i->next)
+            sf::Vector2f prev = i->prev;
+            sf::Vector2f next = i->next;
+            sf::Vector2f curr = i->pos;
+
+            if(j->pos == i->next || j->pos == i->prev)
             {
                 if(!lineIntersects(i->pos, j->pos, nodes))
                 {
