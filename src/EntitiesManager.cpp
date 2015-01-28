@@ -69,9 +69,9 @@ void EntitiesManager::draw(sf::RenderTarget& target) const
 */
 }
 
-std::list<Pathfinder::Waypoint> EntitiesManager::getPath(sf::Vector2f a, sf::Vector2f b)
+std::list<Pathfinder::Waypoint> EntitiesManager::getPath(float diameter, sf::Vector2f a, sf::Vector2f b)
 {
-    return mPathfinder.getPath(a, b);
+    return mPathfinder.getPath(diameter, a, b);
 }
 
 void EntitiesManager::removeWrecks()

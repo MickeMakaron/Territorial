@@ -68,7 +68,10 @@ EntityStateMove::EntityStateMove(EntityNode& entity, EntitiesManager& entitiesMa
 
 void EntityStateMove::initialize()
 {
-    mWaypoints = mEntitiesManager.getPath(mEntity.getPosition(), mTarget);
+    sf::FloatRect rect = mEntity.getBoundingRect();
+    float diameter = rect.width / 2 + rect.height / 2;
+
+    mWaypoints = mEntitiesManager.getPath(diameter, mEntity.getPosition(), mTarget);
 }
 
 bool EntityStateMove::isDone() const
