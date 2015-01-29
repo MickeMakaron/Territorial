@@ -48,6 +48,8 @@ class Pathfinder
 
         struct Waypoint
         {
+            Waypoint(sf::Vector2f from, sf::Vector2f to);
+            Waypoint(const TerrainCollissionNode::Path* pPath);
             sf::Vector2f    destination;
             sf::Vector2f    direction;
             float           distance;
@@ -57,6 +59,17 @@ class Pathfinder
         std::list<Waypoint> getPath(float diameter, sf::Vector2f pos, sf::Vector2f destination);
 
     private:
+        struct PathNode
+        {
+            PathNode(float distanceTravelled, float distanceLeft, std::list<PathNode>::iterator iParent, const TerrainCollissionNode::Point* pPoint);
+            float f();
+            float distanceTravelled;
+            float distanceLeft;
+            std::list<PathNode>::iterator iParent;
+            const TerrainCollissionNode::Point* pPoint;
+            const TerrainCollissionNode::Path* pPath;
+        };
+
         typedef const TerrainCollissionNode::Point* PointPtr;
         typedef const TerrainCollissionNode::Path* PathPtr;
 

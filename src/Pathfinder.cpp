@@ -43,6 +43,37 @@ Pathfinder::Pathfinder(const Map& map)
 
 }
 
+Pathfinder::PathNode::PathNode(float distanceTravelled, float distanceLeft, std::list<PathNode>::iterator iParent, const TerrainCollissionNode::Point* pPoint)
+: distanceTravelled(distanceTravelled)
+, distanceLeft(distanceLeft)
+, iParent(iParent)
+, pPoint(pPoint)
+, pPath(nullptr)
+{
+
+}
+
+Pathfinder::Waypoint::Waypoint(sf::Vector2f from, sf::Vector2f to)
+: destination(to)
+{
+    sf::Vector2f dVec = to - from;
+    distance = length(dVec);
+    direction = dVec / distance;
+}
+
+Pathfinder::Waypoint::Waypoint(const TerrainCollissionNode::Path* pPath)
+: destination(pPath->p->pos)
+, distance(pPath->length)
+, direction(pPath->direction)
+{
+
+}
+
+float Pathfinder::PathNode::f()
+{
+    return distanceTravelled + distanceLeft;
+}
+
 void Pathfinder::draw(sf::RenderTarget& target) const
 {
 }
@@ -160,14 +191,15 @@ Pathfinder::PathPtr Pathfinder::findSmallestF(float diameter, sf::Vector2f desti
 }
 
 
+
 std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f pos, sf::Vector2f destination)
 {
     std::list<Waypoint> wayPoints;
 
     if(pathIsObstructed(pos, destination))
     {
-        PointPtr goal = findSmallestF(pos, destination, mMap.getVisiblePoints(destination));
-        PointPtr start = findSmallestF(pos, goal->pos, mMap.getVisiblePoints(pos));
+        //PointPtr goal = findSmallestF(pos, destination, mMap.getVisiblePoints(destination));
+        //PointPtr start = findSmallestF(pos, goal->pos, mMap.getVisiblePoints(pos));
 
         // Code in here might get used later on.
         {
@@ -247,6 +279,173 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
             */
         }
 
+
+        std::list<PointPtr> visibleStartPoints = mMap.getVisiblePoints(pos);
+        std::list<PointPtr> visibleGoalPoints = mMap.getVisiblePoints(destination);
+
+        std::list<PathNode> allNodes; // All nodes are stored here.
+        std::list<std::list<PathNode>::iterator> visitedNodes; // Iterators to visited nodes in allNodes.
+        std::list<std::list<PathNode>::iterator> checkList; // Iterators to nodes to be checked in allNodes.
+
+        auto iParent = allNodes.insert(allNodes.end(), PathNode(0.f, lengthSqrd(pos - destination), allNodes.end(), nullptr));
+        auto iParentCheckList = checkList.insert(checkList.end(), iParent);
+        for(PointPtr pPoint : visibleStartPoints)
+            checkList.push_back(allNodes.insert(allNodes.end(), PathNode(lengthSqrd(pPoint->pos - pos), lengthSqrd(pPoint->pos - destination), iParent, pPoint)));
+
+
+        checkList.erase(iParentCheckList);
+        visitedNodes.push_back(iParent);
+
+        auto isLessThan = [](std::list<PathNode>::iterator& a, std::list<PathNode>::iterator& b)
+        {
+            return a->f() < b->f();
+        };
+
+        iParentCheckList = std::min_element(checkList.begin(), checkList.end(), isLessThan);
+        iParent = *iParentCheckList;
+        checkList.erase(iParentCheckList);
+        visitedNodes.push_back(iParent);
+
+
+
+        //void findPath(std::list<std::list<PathNode>::iterator>& visitedNodes
+
+        std::function<void()> findNext = [&]()
+        {
+            float minF = std::numeric_limits<float>::max();
+            auto iNextCheckList = checkList.end();
+            for(PathPtr pPath : iParent->pPoint->paths)
+            {
+
+                bool isVisited = false;
+                for(auto& iVisited : visitedNodes)
+                {
+                    if(iVisited->pPoint && iVisited->pPoint == pPath->p)
+                    {
+                        isVisited = true;
+                        break;
+                    }
+                }
+
+                if(!isVisited)
+                {
+                    // Check if path's point exists in the checklist.
+                    auto iChecked = allNodes.end();
+                    auto iCheckedCheckList = checkList.begin();
+                    while(iCheckedCheckList != checkList.end())
+                    {
+                        if((*iCheckedCheckList)->pPoint == pPath->p)
+                        {
+                            iChecked = *iCheckedCheckList;
+                            break;
+                        }
+                        iCheckedCheckList++;
+                    }
+
+                    float distanceTravelled = iParent->distanceTravelled + pPath->lengthSqrd;
+                    float distanceLeft = lengthSqrd(pPath->p->pos - destination);
+                    float f = distanceTravelled + distanceLeft;
+                    // If found in checkList.
+                    if(iCheckedCheckList != checkList.end())
+                    {
+                        float checkedF = iChecked->f();
+                        // If f value from iParent is smaller than from iChecked's
+                        // parent, assign iChecked to iParent and this f.
+                        if(f < checkedF)
+                        {
+                            iChecked->iParent = iParent;
+                            iChecked->distanceTravelled = distanceTravelled;
+                            iChecked->distanceLeft = distanceLeft;
+
+                            if(checkedF <= minF)
+                            {
+                                minF = f;
+                                iNextCheckList = iCheckedCheckList;
+                                iParent->pPath = pPath;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        auto iInsertedCheckList = checkList.insert(checkList.end(), allNodes.insert(allNodes.end(), PathNode(distanceTravelled, distanceLeft, iParent, pPath->p)));
+                        if(f <= minF)
+                        {
+                            minF = f;
+                            iNextCheckList = iInsertedCheckList;
+                            iParent->pPath = pPath;
+                        }
+                    }
+
+                }
+            }
+
+            assert(iNextCheckList != checkList.end());
+            assert(iParent->pPath);
+            iParent = *iNextCheckList;
+            checkList.erase(iNextCheckList);
+            visitedNodes.push_back(iParent);
+        };
+
+
+        auto parentIsGoalPoint = [&]()
+        {
+            for(PointPtr goalPoint : visibleGoalPoints)
+                if(iParent->pPoint == goalPoint)
+                    return true;
+
+            return false;
+        };
+
+        while(!checkList.empty() && !parentIsGoalPoint())
+        {
+            findNext();
+        }
+
+        /*
+        do
+        {
+            findNext();
+        } while(!checkList.empty() && !parentIsGoalPoint());
+*/
+        // If empty, no path was found.
+        if(!checkList.empty())
+        {
+            // exit point -> destination
+            wayPoints.push_front(Waypoint(iParent->pPoint->pos, destination));
+
+
+            if(iParent->iParent->pPoint)
+            {
+                iParent = iParent->iParent;
+
+                // entry point -> ... -> exit point
+                while(iParent->iParent->pPoint)
+                {
+                    if(!iParent->pPath)
+                        int flurp = 0;
+                    wayPoints.push_front(Waypoint(iParent->pPath));
+                    iParent = iParent->iParent;
+                }
+
+                // Entry point's path
+                wayPoints.push_front(Waypoint(iParent->pPath));
+            }
+
+            // pos -> entry point
+            wayPoints.push_front(Waypoint(pos, iParent->pPoint->pos));
+
+        }
+
+    }
+    else
+        wayPoints.push_back(Waypoint(pos, destination));
+
+    return wayPoints;
+
+
+
+/*
+
         assert(start && goal);
         auto point = start;
         std::list<PathPtr> paths;
@@ -259,7 +458,9 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
             paths.push_back(findSmallestF(diameter, goal->pos, possiblePaths));
             point = paths.back()->p;
         }
+*/
 
+/*
         Waypoint wp;
         wp.destination = start->pos;
         sf::Vector2f dVec = start->pos - pos;
@@ -298,5 +499,7 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
         wayPoints = {wp};
     }
 
+
     return wayPoints;
+*/
 }

@@ -78,7 +78,7 @@ void Map::buildMap()
 
 
 
-/*
+
     for(unsigned int x = 0; x < 10; x++)
     {
         for(unsigned int y = 0; y < 10; y++)
@@ -92,7 +92,7 @@ void Map::buildMap()
 
         for(auto& p : points)
             p += sf::Vector2f(-300 * 10, 70);
-    }*/
+    }
 
 
     for(auto i = mImpassableNodes.begin(); i != mImpassableNodes.end(); i++)
@@ -190,7 +190,7 @@ const std::list<Map::NodePtr>& Map::getImpassableTerrain() const
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
     target.draw(mDrawShape);
-    target.draw(mPaths);
+    //target.draw(mPaths);
     for(const NodePtr& pNode : mImpassableNodes)
     {
         target.draw(*pNode.get());
