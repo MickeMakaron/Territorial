@@ -90,7 +90,7 @@ void World::buildWorld()
     mEntitiesManager.insertEntity(std::move(antHill));
 
     pos.y += 50;
-    for(int y = 0; y < 3; y++)
+    for(int y = 0; y < 20; y++)
     {
         for(int x = 0; x < 3; x++)
         {

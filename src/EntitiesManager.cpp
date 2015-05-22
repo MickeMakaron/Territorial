@@ -87,5 +87,5 @@ void EntitiesManager::update()
 		mEntitiesGraph.onCommand(mCommandQueue.pop());
 
     mEntitiesGraph.update(mCommandQueue);
-    mCollissionManager.update();
+    //mCollissionManager.update();
 }
