@@ -68,16 +68,25 @@ void Map::buildMap()
         p += sf::Vector2f(300, 10);
 
     mImpassableNodes.push_back(std::move(NodePtr(new TerrainCollissionNode(points))));
-
+/*
 
     for(auto& p : points)
         p += sf::Vector2f(300, -10);
 
     mImpassableNodes.push_back(std::move(NodePtr(new TerrainCollissionNode(points))));
 
+*/
 
+    for(int i = 0; i < 10; i++)
+    {
 
+        for(auto& p : points)
+            p += sf::Vector2f(0, 70);
 
+        mImpassableNodes.push_back(std::move(NodePtr(new TerrainCollissionNode(points))));
+    }
+
+/*
 
     for(unsigned int x = 0; x < 10; x++)
     {
@@ -93,7 +102,7 @@ void Map::buildMap()
         for(auto& p : points)
             p += sf::Vector2f(-300 * 10, 70);
     }
-
+*/
 
     for(auto i = mImpassableNodes.begin(); i != mImpassableNodes.end(); i++)
     {
@@ -109,7 +118,7 @@ void Map::buildMap()
         pNode->computePassWidths(mImpassableNodes);
 
 
-    mPaths.setPrimitiveType(sf::Quads);
+    mPaths.setPrimitiveType(sf::Lines);
 
 
     sf::Vertex p1, p2, p3, p4;
@@ -122,7 +131,7 @@ void Map::buildMap()
         {
             for(const TerrainCollissionNode::Path* pPath : point.paths)
             {
-                if(std::find(pNode->getPoints().begin(), pNode->getPoints().end(), pPath->p->pos) != pNode->getPoints().end() && pPath->isEdge)//pPath->p->pos != point.next && pPath->p->pos != point.prev)
+                //if(std::find(pNode->getPoints().begin(), pNode->getPoints().end(), pPath->p->pos) != pNode->getPoints().end()=// && pPath->isEdge)//pPath->p->pos != point.next && pPath->p->pos != point.prev)
                 {
                     /*
                     sf::Vector2f right(pPath->direction.y, -pPath->direction.x);
@@ -137,6 +146,13 @@ void Map::buildMap()
                     mPaths.append(p4);
                     */
 
+                    p1.position = point.pos;
+                    p2.position = pPath->p->pos;
+
+                    mPaths.append(p1);
+                    mPaths.append(p2);
+
+/*
                     if(pPath->p->pos == point.prev)
                     {
                         sf::Vector2f right(pPath->direction.y, -pPath->direction.x);
@@ -150,6 +166,8 @@ void Map::buildMap()
                         mPaths.append(p3);
                         mPaths.append(p4);
                     }
+
+                    */
 
                 }
             }
@@ -190,7 +208,7 @@ const std::list<Map::NodePtr>& Map::getImpassableTerrain() const
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
     target.draw(mDrawShape);
-    //target.draw(mPaths);
+    target.draw(mPaths);
     for(const NodePtr& pNode : mImpassableNodes)
     {
         target.draw(*pNode.get());

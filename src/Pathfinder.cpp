@@ -198,6 +198,153 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
 
     if(pathIsObstructed(pos, destination))
     {
+        std::list<PointPtr> visibleGoalPoints = mMap.getVisiblePoints(destination);
+        PointPtr goal = findSmallestF(pos, destination, visibleGoalPoints);
+
+        std::list<PointPtr> visibleStartPoints = mMap.getVisiblePoints(pos);
+        PointPtr start = findSmallestF(pos, goal->pos, visibleStartPoints);
+
+        sf::Vector2f goalPos = goal->pos;
+        auto sortComparator = [&](PathPtr a, PathPtr b)
+        {
+            return getF(a, goalPos) < getF(b, goalPos);
+        };
+
+
+        bool hasReachedGoal = false;
+        int count = 0;
+        std::list<PathPtr> breadCrumbs;
+        std::list<PointPtr> visitedPoints;
+
+        std::function<void(PointPtr point)> heuristicDFS;
+        heuristicDFS = [&](PointPtr point)
+        {
+            visitedPoints.push_front(point);
+
+            std::list<TerrainCollissionNode::Path*> paths = point->paths;
+            paths.sort(sortComparator);
+
+            sf::Vector2f front = paths.front()->p->pos - goalPos;
+            sf::Vector2f back = paths.back()->p->pos - goalPos;
+
+            for(PathPtr path : paths)
+            {
+                count++;
+                if(hasReachedGoal)
+                    return;
+
+                breadCrumbs.push_back(path);
+
+                if(path->p->pos == goalPos || count >= 5000)
+                {
+                    hasReachedGoal = true;
+                    return;
+                }
+
+                if(std::find(visitedPoints.begin(), visitedPoints.end(), path->p) == visitedPoints.end())
+                    heuristicDFS(path->p);
+                if(hasReachedGoal)
+                    return;
+
+                breadCrumbs.pop_back();
+            }
+
+
+        };
+
+        heuristicDFS(start);
+
+
+
+        auto it = breadCrumbs.end();
+        it--;
+        while(it != breadCrumbs.begin())
+        {
+            if(std::find(visibleStartPoints.begin(), visibleStartPoints.end(), (*it)->p) != visibleStartPoints.end())
+            {
+                start = (*it)->p;
+                it++;
+                breadCrumbs.erase(breadCrumbs.begin(), it);
+                break;
+            }
+            it--;
+        }
+
+
+        for(it = breadCrumbs.begin(); it != breadCrumbs.end(); it++)
+        {
+            if(std::find(visibleGoalPoints.begin(), visibleGoalPoints.end(), (*it)->p) != visibleGoalPoints.end())
+            {
+                it++;
+                breadCrumbs.erase(it, breadCrumbs.end());
+                break;
+            }
+        }
+/*
+        for(it = breadCrumbs.begin(); it != breadCrumbs.end(); it++)
+        {
+            for(PathPtr p : goal->paths)
+            {
+                if(p->p == (*it)->p)
+                {
+                    it++;
+                    breadCrumbs.erase(it, breadCrumbs.end());
+                    break;
+                }
+            }
+        }
+*/
+/*
+        for(it = breadCrumbs.begin(); it != breadCrumbs.end(); it++)
+        {
+            PointPtr point = (*it)->p;
+
+            auto it2 = breadCrumbs.end();
+            it2--;
+            while(it2 != it)
+            {
+                for(PathPtr path : point->paths)
+                {
+
+                    if(path->p->pos == (*it2)->p->pos)
+                    {
+                        PathPtr path1 = *it;
+                        PathPtr path2 = *it2;
+
+
+                        *it = path;
+
+                        while(it2 != it)
+                            breadCrumbs.erase(it2--);
+                        it2++;
+
+                        break;
+                    }
+                }
+
+                it2--;
+            }
+
+
+        }
+        */
+
+        for(PathPtr path : breadCrumbs)
+            wayPoints.push_back(Waypoint(path));
+
+        /*if(!wayPoints.empty())
+        wayPoints.pop_front();
+        if(!wayPoints.empty())
+        wayPoints.pop_back();
+*/
+        wayPoints.push_front(Waypoint(pos, start->pos));
+
+        if(breadCrumbs.empty())
+            wayPoints.push_back(Waypoint(start->pos, destination));
+        else
+            wayPoints.push_back(Waypoint(breadCrumbs.back()->p->pos, destination));
+
+
         //PointPtr goal = findSmallestF(pos, destination, mMap.getVisiblePoints(destination));
         //PointPtr start = findSmallestF(pos, goal->pos, mMap.getVisiblePoints(pos));
 
@@ -279,19 +426,27 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
             */
         }
 
-
+/**
         std::list<PointPtr> visibleStartPoints = mMap.getVisiblePoints(pos);
         std::list<PointPtr> visibleGoalPoints = mMap.getVisiblePoints(destination);
+
+        assert(!visibleStartPoints.empty());
+        assert(!visibleGoalPoints.empty());
 
         std::list<PathNode> allNodes; // All nodes are stored here.
         std::list<std::list<PathNode>::iterator> visitedNodes; // Iterators to visited nodes in allNodes.
         std::list<std::list<PathNode>::iterator> checkList; // Iterators to nodes to be checked in allNodes.
 
-        auto iParent = allNodes.insert(allNodes.end(), PathNode(0.f, lengthSqrd(pos - destination), allNodes.end(), nullptr));
+        TerrainCollissionNode::Point startPoint(sf::Vector2f(0, 0), pos, sf::Vector2f(0, 0));
+        std::list<TerrainCollissionNode::Path> startPointPaths;
+        auto iParent = allNodes.insert(allNodes.end(), PathNode(0.f, lengthSqrd(pos - destination), allNodes.end(), &startPoint));
         auto iParentCheckList = checkList.insert(checkList.end(), iParent);
         for(PointPtr pPoint : visibleStartPoints)
+        {
+            startPointPaths.push_back(TerrainCollissionNode::Path(&startPoint, pPoint, false));
+            startPoint.paths.push_back(&startPointPaths.back());
             checkList.push_back(allNodes.insert(allNodes.end(), PathNode(lengthSqrd(pPoint->pos - pos), lengthSqrd(pPoint->pos - destination), iParent, pPoint)));
-
+        }
 
         checkList.erase(iParentCheckList);
         visitedNodes.push_back(iParent);
@@ -300,20 +455,24 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
         {
             return a->f() < b->f();
         };
+*/
 
+/*
         iParentCheckList = std::min_element(checkList.begin(), checkList.end(), isLessThan);
         iParent = *iParentCheckList;
         checkList.erase(iParentCheckList);
         visitedNodes.push_back(iParent);
-
+*/
 
 
         //void findPath(std::list<std::list<PathNode>::iterator>& visitedNodes
-
+/**
         std::function<void()> findNext = [&]()
         {
+            sf::Vector2f poss = pos;
             float minF = std::numeric_limits<float>::max();
             auto iNextCheckList = checkList.end();
+            auto derp = *iParent;
             for(PathPtr pPath : iParent->pPoint->paths)
             {
 
@@ -353,17 +512,19 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
                         // parent, assign iChecked to iParent and this f.
                         if(f < checkedF)
                         {
-                            iChecked->iParent = iParent;
-                            iChecked->distanceTravelled = distanceTravelled;
-                            iChecked->distanceLeft = distanceLeft;
-
-                            if(checkedF <= minF)
-                            {
-                                minF = f;
-                                iNextCheckList = iCheckedCheckList;
-                                iParent->pPath = pPath;
-                            }
+                            //iChecked->iParent = iParent;
+                            //iChecked->distanceTravelled = distanceTravelled;
+                            //iChecked->distanceLeft = distanceLeft;
+                            //checkedF = iChecked->f();
                         }
+
+                        if(checkedF <= minF)
+                        {
+                            minF = checkedF;
+                            iNextCheckList = iCheckedCheckList;
+                            iParent->pPath = pPath;
+                        }
+
                     }
                     else
                     {
@@ -379,11 +540,29 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
                 }
             }
 
-            assert(iNextCheckList != checkList.end());
-            assert(iParent->pPath);
-            iParent = *iNextCheckList;
-            checkList.erase(iNextCheckList);
-            visitedNodes.push_back(iParent);
+            // If no unvisited nodes are found.
+            if(iNextCheckList == checkList.end())
+            {
+                assert(iParent->pPoint != &startPoint);
+
+                // Roll back to previous node.
+                iParent = iParent->iParent;
+            }
+            else
+            {
+                derp = *iParent;
+
+                assert(iParent->pPath);
+                iParent = *iNextCheckList;
+
+                derp = *iParent;
+
+                checkList.erase(iNextCheckList);
+                visitedNodes.push_back(iParent);
+
+
+            }
+
         };
 
 
@@ -400,7 +579,7 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
         {
             findNext();
         }
-
+*/
         /*
         do
         {
@@ -408,17 +587,29 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
         } while(!checkList.empty() && !parentIsGoalPoint());
 */
         // If empty, no path was found.
+        /**
         if(!checkList.empty())
         {
             // exit point -> destination
+            Waypoint exit(iParent->pPoint->pos, destination);
             wayPoints.push_front(Waypoint(iParent->pPoint->pos, destination));
 
+            Waypoint derp = wayPoints.front();
 
+            // pos -> entry point -> ... -> exit point
+            do
+            {
+                wayPoints.push_front(Waypoint(iParent->iParent->pPath));
+                derp = wayPoints.front();
+                iParent = iParent->iParent;
+            } while(iParent->pPoint != &startPoint);
+*/
+/*
             if(iParent->iParent->pPoint)
             {
                 iParent = iParent->iParent;
 
-                // entry point -> ... -> exit point
+                // pos -> entry point -> ... -> exit point
                 while(iParent->iParent->pPoint)
                 {
                     if(!iParent->pPath)
@@ -430,12 +621,17 @@ std::list<Pathfinder::Waypoint> Pathfinder::getPath(float diameter, sf::Vector2f
                 // Entry point's path
                 wayPoints.push_front(Waypoint(iParent->pPath));
             }
+            */
 
             // pos -> entry point
-            wayPoints.push_front(Waypoint(pos, iParent->pPoint->pos));
+            //wayPoints.push_front(Waypoint(pos, iParent->pPoint->pos));
 
-        }
+/**        }
 
+        for(Waypoint p : wayPoints)
+        {
+            int flerp = 0;
+        }*/
     }
     else
         wayPoints.push_back(Waypoint(pos, destination));

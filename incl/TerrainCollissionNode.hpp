@@ -46,7 +46,7 @@ class TerrainCollissionNode : public SceneNode
 
         struct Path
         {
-            Path(Point* from, Point* to, bool isEdge, float passWidth = 200);
+            Path(const Point* from, const Point* to, bool isEdge, float passWidth = 200);
             float           passWidth;
             const Point*    p; ///< Destination point
             float           lengthSqrd;

@@ -65,7 +65,7 @@ bool TerrainCollissionNode::lineIntersects(sf::Vector2f p1, sf::Vector2f p2, con
     return false;
 }
 
-TerrainCollissionNode::Path::Path(Point* from, Point* to, bool isEdge, float passWidth)
+TerrainCollissionNode::Path::Path(const Point* from, const Point* to, bool isEdge, float passWidth)
 : p(to)
 , isEdge(isEdge)
 , passWidth(passWidth)
